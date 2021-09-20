@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "115258898181",
+    "firebase_url": "https://testimgclass-default-rtdb.firebaseio.com",
+    "project_id": "testimgclass",
+    "storage_bucket": "testimgclass.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:115258898181:android:0570e9aadfe03f10e6696c",
+        "android_client_info": {
+          "package_name": "com.example.imageclass3"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "115258898181-bkbc0aviu31qghs9kbk76m69ud7s5kg8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAo6X2c3E-5o2d1CLUpcrhT17SUCfCTm_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "115258898181-bkbc0aviu31qghs9kbk76m69ud7s5kg8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:115258898181:android:f1c1af0f43bbde6fe6696c",
+        "android_client_info": {
+          "package_name": "com.example.imageownt3"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "115258898181-bkbc0aviu31qghs9kbk76m69ud7s5kg8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAo6X2c3E-5o2d1CLUpcrhT17SUCfCTm_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "115258898181-bkbc0aviu31qghs9kbk76m69ud7s5kg8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:115258898181:android:134de7d6212a4e2ee6696c",
+        "android_client_info": {
+          "package_name": "com.example.imagepro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "115258898181-bkbc0aviu31qghs9kbk76m69ud7s5kg8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAo6X2c3E-5o2d1CLUpcrhT17SUCfCTm_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "115258898181-bkbc0aviu31qghs9kbk76m69ud7s5kg8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

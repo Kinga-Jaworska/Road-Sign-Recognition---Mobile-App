@@ -1,0 +1,3 @@
+rootProject.name = "ImageOwnT3"
+include ':app'
+include ':openCVLibrary3414'

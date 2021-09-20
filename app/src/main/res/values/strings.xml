@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Sign</string>
+    <string name="btnOption">Opcje</string>
+    <string name="imgSwitch">Informacja obrazkowa</string>
+    <string name="speechSwitch">Informacja dźwiękowa</string>
+    <string name="textSwitch">Informacja tekstowa</string>
+    <string name="btnCamera">Włącz detektor znaków</string>
+    <string name="infOpcje">Opcje</string>
+    <string name="textSign">Wykryty znak</string>
+</resources>
