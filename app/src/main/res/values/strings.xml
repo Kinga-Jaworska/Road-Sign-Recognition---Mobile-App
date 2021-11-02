@@ -7,4 +7,11 @@
     <string name="btnCamera">Włącz detektor znaków</string>
     <string name="infOpcje">Opcje</string>
     <string name="textSign">Wykryty znak</string>
+
+    <string name="modelError">Błąd pobierania modelu sztucznej inteligencji.</string>
+    <string name="errorTitle">Error</string>
+
+    <string name="errorRestart">Restartuj aplikację</string>
+    <string name="errorOk">Zamknij okno</string>
+
 </resources>

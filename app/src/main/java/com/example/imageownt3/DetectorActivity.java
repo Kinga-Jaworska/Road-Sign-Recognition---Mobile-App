@@ -3,10 +3,10 @@ package com.example.imageownt3;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.Voice;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -21,11 +21,16 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -33,10 +38,14 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Locale;
 
-public class DetectorActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, objectDetector.onImageRecognition
+public class DetectorActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, com.example.imageownt3.objectDetector.ImageRecognitionInterface
 {
     private Mat mRgba;
     private Mat mGray;
@@ -50,6 +59,9 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     FirebaseDatabase database;
     boolean imgOption, speechOption, textOption;
     private TextToSpeech textToSpeech;
+    ArrayList<String> labelList = new ArrayList<>();
+    int INPUT_SIZE = 416;
+    boolean modelError=false;
 
     private BaseLoaderCallback openCvLoaderCallback =new BaseLoaderCallback(this)
     {
@@ -74,7 +86,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 
     public DetectorActivity()
     {
-        //Log.i(TAG, "constructor: " + this.getClass());
     }
 
     @Override
@@ -95,35 +106,74 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         imageView = findViewById(R.id.imageView);
 
         openCvCamera = (CameraBridgeViewBase) findViewById(R.id.cameraFrames);
-        openCvCamera.setVisibility(SurfaceView.VISIBLE);
-        openCvCamera.setCvCameraViewListener(this);
+
+//        openCvCamera.setVisibility(SurfaceView.VISIBLE);
+//        openCvCamera.setCvCameraViewListener(this);
         //openCvCamera.enableFpsMeter();  //fps display
 
         database = FirebaseDatabase.getInstance();
         imageReference = database.getReference("data").child("images");
 
+        //getLabelfromBase(); //get labels from storage
+
+        //Log.d("sizeListActivity",String.valueOf(labelList.size()));
 
         Bundle bundle = getIntent().getExtras();
         imgOption = bundle.getBoolean("imgOption");
         textOption = bundle.getBoolean("textOption");
         speechOption = bundle.getBoolean("speechOption");
 
-        //TEXT OPTION
-        if(!textOption)
-            textView.setVisibility(View.INVISIBLE);
-        else
-            textView.setVisibility(View.VISIBLE);
+        //SET OPTIONS
+        textVisibility(textOption);
+        imgVisibility(imgOption);
+        speechEnable(speechOption);
 
-        //IMG OPTION
-        if(!imgOption)
-            imageView.setVisibility(View.INVISIBLE);
-            //Toast.makeText(this, "option "+String.valueOf(bundle.getBoolean("imgOption")), Toast.LENGTH_SHORT).show();
-        else
-            imageView.setVisibility(View.VISIBLE);
 
+        labelList = getLabelfromBase(); //get labels from storage
+        LoadModel();
+    }
+
+    private void LoadModel()
+    {
+        try
+        {
+            objectDetector = new objectDetector(labelList, getApplicationContext(),INPUT_SIZE, this);
+            Log.d("TensorflowMessage", "Successfully loaded model");
+        }
+        catch (IOException e)
+        {
+            Log.d("TensorflowMessage", "Error with loading model");
+            e.printStackTrace();
+        }
+    }
+    private void internetState(ImageView imageView)
+    {
+        DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
+        connectedRef.addValueEventListener(new ValueEventListener()
+        {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot)
+            {
+                boolean connected = snapshot.getValue(Boolean.class);
+
+                if (!connected)
+                {
+                    //imageView.setVisibility(View.VISIBLE);
+                    imageView.setImageResource(R.drawable.ic_wifi_off);
+                    // Toast.makeText(getApplicationContext(),"Brak Internetu",Toast.LENGTH_SHORT);
+                    //ImageRecognitionInterface.onInternetConnection("false");
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                System.err.println("Listener was cancelled");
+            }
+        });
+    }
+    private void speechEnable(boolean speechOption)
+    {
         if(speechOption)
         {
-
             textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener()
             {
                 @Override
@@ -139,41 +189,102 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                     else
                         Toast.makeText(getApplicationContext(), "Error speech", Toast.LENGTH_SHORT).show();
                 }
-
             });
         }
+    }
 
-        //input size - for model : 320
+    private void imgVisibility(boolean imgOption)
+    {
+        //IMG OPTION
+        if(!imgOption)
+            imageView.setVisibility(View.INVISIBLE);
+        else
+        {
+            imageView.setVisibility(View.VISIBLE);
+            internetState(imageView);
+        }
+
+    }
+
+    private void textVisibility(boolean textOption)
+    {
+        //TEXT OPTION
+        if(!textOption)
+            textView.setVisibility(View.INVISIBLE);
+        else
+            textView.setVisibility(View.VISIBLE);
+    }
+
+    public ArrayList<String> getLabelfromBase()
+    {
+        //load labelmap:
+        /*ArrayList<String>*/ //labelList2 = new ArrayList<>();
+        StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("labels.txt");
+
         try
         {
-            objectDetector = new objectDetector(getAssets(), "label3.txt", 320, getApplicationContext(),this);
-            Log.d("TensorflowMessage", "Successfully loaded model");
+            File localFile = File.createTempFile("labels", "txt");
+            File finalLocalFile = localFile;
+            storageReference.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot)
+                {
+
+                    Log.d("sizeListstorage","skopiowano plik "+ finalLocalFile.getPath());
+
+                    FileReader fileReader = null;
+                    try {
+                        String path = finalLocalFile.getPath();
+                        fileReader = new FileReader(path);
+
+                        BufferedReader bufferedReader = new BufferedReader(fileReader);
+                        String buffer;
+                        StringBuilder stringBuilder = new StringBuilder();
+
+                        while ((buffer = bufferedReader.readLine()) != null)
+                        {
+                            stringBuilder.append(buffer);
+                            labelList.add(buffer);
+                        }
+                        Log.d("sizeListActivity",String.valueOf(labelList.size()));
+
+
+                        //after getting data -> turn on camera
+                        openCvCamera.setVisibility(SurfaceView.VISIBLE);
+                        openCvCamera.setCvCameraViewListener(DetectorActivity.this);
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    // Handle any errors
+                    Log.d("storage","Error "+exception.toString());
+                }
+            });
         }
         catch (IOException e)
         {
-            Log.d("TensorflowMessage", "Error with loading model");
             e.printStackTrace();
         }
+
+        return labelList;
     }
 
     @Override
     protected void onResume()
     {
         super.onResume();
-
         openCvLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-//        if (!OpenCVLoader.initDebug()) {
-//            Log.d(TAG, "OpenCV loaded");
-//            openCvLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-//        } else {
-//            Log.d(TAG, "OpenCV not loaded");
-//            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, openCvLoaderCallback);
-//        }
     }
 
     @Override
     protected void onPause()
     {
+        //labelList = getLabelfromBase(); //get labels from storage
+
         if(textToSpeech !=null){
             textToSpeech.stop();
             textToSpeech.shutdown();
@@ -206,11 +317,13 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         mRgba = inputFrame.rgba();
         mGray = inputFrame.gray();
 
-        Mat out =  new Mat();
-        out = objectDetector.recognizeImage(mRgba);
+        if(!modelError) //objectDetector!=null &&
+            objectDetector.recognizeImage(mRgba);
 
-        return out;
-        //return mRgba;
+        Log.d("sizeList","Camera on ");
+
+        //return out;
+        return mRgba;
     }
 
     @Override
@@ -241,10 +354,26 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         });
     }
 
+    @Override
+    public void onModelError(String errorM)
+    {
+        Log.d("modelError",errorM);
+        modelError = true;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.modelError).setTitle(R.string.errorTitle);
+        builder.setPositiveButton(R.string.errorRestart, (dialogInterface, i) -> android.os.Process.killProcess(android.os.Process.myPid()));
+        builder.setNegativeButton(R.string.errorOk, (dialogInterface, i) -> {});
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        //textView.setText(modelError);
+    }
+
     public void getImageFromBase(String detectedClass)
     {
         //get Product from base
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        FirebaseDatabase database = FirebaseDatabase.getInstance(); //as Global ?
         imageReference = database.getReference("data").child("images");
         imageReference.addValueEventListener(new ValueEventListener()
         {
@@ -263,15 +392,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                         if((img.getName().toLowerCase().contains(classDetectionText.toLowerCase())))
                         {
                             Glide.with(getBaseContext()).load(img.getLink()).into(imageView);
-                            //imageView.setImageURI(Uri.parse(img.getLink()));
-                            //Toast.makeText(CameraActivity.this, "TEXT "+classDetectionText, Toast.LENGTH_SHORT).show();
                         }
-//                        else
-//                        {
-//                            // imageView.setImageResource(R.drawable.ic_car);
-//                            //Toast.makeText(CameraActivity.this, "Nie widzi "+img.getName(), Toast.LENGTH_SHORT).show();
-//                        }
-//                        //imageArrayList.add(img);
                     }
 
                 }

@@ -1,8 +1,19 @@
-Zakaz ruchu w obu kierunkach
-Zakaz wyprzedzania
-Zakaz zatrzymywania
-Zakaz wjazdu
-Stop
-Ustąp pierwszeństwa
-Zakaz postoju
-Droga z pierwszeństwem przejazdu
+zakaz Ruchu
+zakaz Wyprzedzania
+zakaz Zatrzymywania
+zakaz Wjazdu
+jednokierunkowa
+stop
+ustap Pierwszenstwa
+zakaz Zawracania
+zakaz Postoju
+pierwszenstwo Przejazdu
+limit 30
+limit 40
+limit 50
+limit 60
+limit 70
+limit 80
+limit 90
+limit 100
+piesi
