@@ -129,11 +129,12 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         speechEnable(speechOption);
 
 
-        labelList = getLabelfromBase(); //get labels from storage
-        LoadModel();
+        labelList = getLabels(); //get labels from storage
+
+        CreateObjectDetector();
     }
 
-    private void LoadModel()
+    private void CreateObjectDetector()
     {
         try
         {
@@ -182,9 +183,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                     if(status==TextToSpeech.SUCCESS)
                     {
                         Locale locale = new Locale("pl_PL");
-                        //System.out(Locale.getDefault().getDisplayCountry());
                         textToSpeech.setLanguage(locale);
-
                     }
                     else
                         Toast.makeText(getApplicationContext(), "Error speech", Toast.LENGTH_SHORT).show();
@@ -215,7 +214,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             textView.setVisibility(View.VISIBLE);
     }
 
-    public ArrayList<String> getLabelfromBase()
+    public ArrayList<String> getLabels()
     {
         //load labelmap:
         /*ArrayList<String>*/ //labelList2 = new ArrayList<>();
@@ -246,6 +245,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                             stringBuilder.append(buffer);
                             labelList.add(buffer);
                         }
+
                         Log.d("sizeListActivity",String.valueOf(labelList.size()));
 
 
@@ -262,6 +262,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                 public void onFailure(@NonNull Exception exception) {
                     // Handle any errors
                     Log.d("storage","Error "+exception.toString());
+                    onModelError("bląd pliku");
                 }
             });
         }

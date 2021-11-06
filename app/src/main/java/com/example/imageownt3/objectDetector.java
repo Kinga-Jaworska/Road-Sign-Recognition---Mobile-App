@@ -72,7 +72,7 @@ public class objectDetector
                 .requireWifi()  // Also possible: .requireCharging() and .requireDeviceIdle()
                 .build();
         FirebaseModelDownloader.getInstance()
-                .getModel("signModel", DownloadType.LATEST_MODEL, conditions)
+                .getModel("signModel", DownloadType.LOCAL_MODEL_UPDATE_IN_BACKGROUND, conditions)
                 .addOnSuccessListener(new OnSuccessListener<CustomModel>() {
                     @Override
                     public void onSuccess(CustomModel model)
@@ -144,8 +144,9 @@ public class objectDetector
                     maxClass = classes[c];
                 }
             }
+
             final float score = maxClass;
-            if (score > 0.6) 
+            if (score > 0.8)
                 ImageRecognitionInterface.onRecognition(String.valueOf(labelList.get(detectedClass)));
         }
 

@@ -1,0 +1,6 @@
+zakaz Ruchu
+zakaz Wyprzedzania
+zakaz Zatrzymywania
+zakaz Wjazdu
+stop
+ustap Pierwszenstwa
