@@ -3,6 +3,7 @@ package com.example.imageownt3;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -21,7 +22,9 @@ import com.google.firebase.ml.modeldownloader.FirebaseModelDownloader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.tensorflow.lite.Delegate;
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.gpu.GpuDelegate;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +49,7 @@ public class objectDetector
     int height =0 ;
     int width = 0;
     Context context;
+    GpuDelegate gpuDelegate;
 
     objectDetector(ArrayList<String> arrayList, Context context, int inputSize, ImageRecognitionInterface ImageRecognitionInterface) throws IOException
     {
@@ -58,14 +62,44 @@ public class objectDetector
 
         //define gpu/cpu
         Interpreter.Options options = new Interpreter.Options();
+
         //gpuDelegate = new GpuDelegate();
 
+        // Initialize interpreter with GPU delegate
+
+        //CompatibilityList compatList = new CompatibilityList();
+
+        //GPU - check if exists and set options
+
+
+        //gpuDelegate = new GpuDelegate();
+       // options.addDelegate(gpuDelegate);
+
+        options.setNumThreads(4);
+        //ImageRecognitionInterface.gpuDelegate("Gpu");
+
+
+//        if(compatList.isDelegateSupportedOnThisDevice())
+//        {
+//            // if the device has a supported GPU, add the GPU delegate
+//            //GpuDelegate.Options delegateOptions = compatList.getBestOptionsForThisDevice();
+//            gpuDelegate = new GpuDelegate();
+//            options.addDelegate(gpuDelegate);
+//            options.setNumThreads(4);
+//            ImageRecognitionInterface.gpuDelegate("Gpu");
+//
+//        } else {
+//            // if the GPU is not supported, run on 4 threads
+//            options.setNumThreads(4);
+//            ImageRecognitionInterface.gpuDelegate("NO Gpu");
+//            //ImageRecognitionInterface.onModelError("not supported Gpu");
+//        }
         //options.addDelegate(gpuDelegate);
-        options.setNumThreads(4);  //depending on phone
-        LoadModel();
+        //options.setNumThreads(4);  //depending on phone
+        LoadModel(options);
     }
 
-    public void LoadModel()
+    public void LoadModel(Interpreter.Options options)
     {
         //LOAD MODEL from FireBase
         CustomModelDownloadConditions conditions = new CustomModelDownloadConditions.Builder()
@@ -80,7 +114,7 @@ public class objectDetector
                         File modelFile = model.getFile();
                         if (modelFile != null)
                         {
-                            interpreter = new Interpreter(modelFile);
+                            interpreter = new Interpreter(modelFile,options);
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener() {
@@ -97,6 +131,7 @@ public class objectDetector
         //90°
         Mat rotatedMatImage = new Mat();
         Core.flip(matImage.t(), rotatedMatImage, 1);
+
 
         //convert to Bitmap
         //bitmap = null;
@@ -146,8 +181,11 @@ public class objectDetector
             }
 
             final float score = maxClass;
-            if (score > 0.8)
+            if (score > 0.85)
+            {
                 ImageRecognitionInterface.onRecognition(String.valueOf(labelList.get(detectedClass)));
+                //ImageRecognitionInterface.onRecognitionTimer(String.valueOf(labelList.get(detectedClass)));
+            }
         }
 
         //-90°
@@ -204,6 +242,8 @@ public class objectDetector
     {
         void onRecognition(String detectedClass);
         void onModelError(String modelError);
+        //void gpuDelegate(String gpuInfo);
+        void onRecognitionTimer(String valueOf);
     }
 
 }

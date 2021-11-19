@@ -56,12 +56,12 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:28.4.0')
 
     //TF & FIREBASE
-    implementation 'org.tensorflow:tensorflow-lite:2.5.0'
-    implementation 'org.tensorflow:tensorflow-lite-gpu:2.5.0'
+    implementation 'org.tensorflow:tensorflow-lite:2.2.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.2.0'
 
 
     // Import the BoM for the Firebase platform
-    implementation platform('com.google.firebase:firebase-bom:28.3.1')
+    //implementation platform('com.google.firebase:firebase-bom:28.3.1')
 
 
     // Declare the dependency for the Firebase ML model downloader library

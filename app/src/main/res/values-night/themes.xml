@@ -2,15 +2,32 @@
     <!-- Base application theme. -->
     <style name="Theme.ImageOwnT3" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/greenAccent</item>
-        <item name="colorPrimaryVariant">@color/greenAccent</item>
-        <item name="colorOnPrimary">@color/darkGray</item>
+
+        <!-- Bottom Color -->
+        <item name="colorPrimary">@color/darkColor</item>
+
+        <!-- Top Color -->
+        <item name="colorPrimaryVariant">@color/LightGreen</item>
+
+        <item name="colorOnPrimary">@color/blackTransparent</item>
+
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/greenAccent</item>
-        <item name="colorSecondaryVariant">@color/teal_200</item>
         <item name="colorOnSecondary">@color/black</item>
+
+        <!--Text/Img Button -->
+        <item name="colorSecondaryVariant">@color/black</item>
+
+        <!-- Button Switches-->
+        <item name="colorSecondary">@color/LightGreen</item>
+
+        <!-- wifi -->
+        <item name="colorAccent">@color/LightGreen</item>
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:textColor">@color/darkColor</item>
+
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+
         <!-- Customize your theme here. -->
     </style>
 </resources>

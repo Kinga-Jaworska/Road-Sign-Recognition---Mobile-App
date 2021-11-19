@@ -1,17 +1,31 @@
 <resources>
     <string name="app_name">Sign</string>
     <string name="btnOption">Opcje</string>
-    <string name="imgSwitch">Informacja obrazkowa</string>
+    <string name="imgSwitch">Informacja obrazkowa i tekstowa</string>
     <string name="speechSwitch">Informacja dźwiękowa</string>
     <string name="textSwitch">Informacja tekstowa</string>
+    <string name="vibSwitch">Wibracje dla znaków zakazu</string>
+
     <string name="btnCamera">Włącz detektor znaków</string>
     <string name="infOpcje">Opcje</string>
     <string name="textSign">Wykryty znak</string>
 
     <string name="modelError">Błąd pobierania modelu sztucznej inteligencji.</string>
+    <string name="speachError">Aby pobrać pakiet wejdź do ustawień języka, następnie Text-to-speech output -> Ustawienia Preferred engine -> Install voice data -> wybierz z listy język polski i zainstaluj.</string>
+    <string name="speachErrorTitle">Brak pakietu językowego</string>
+    <string name="speachErrorYES">Przejdź do ustawień</string>
+    <string name="speachErrorNO">Zamknij</string>
     <string name="errorTitle">Error</string>
 
     <string name="errorRestart">Restartuj aplikację</string>
     <string name="errorOk">Zamknij okno</string>
+
+
+    <string name="gpuInfo">GPU</string>
+    <string name="cpuInfo">CPU</string>
+
+    <string name="cameraMode">Tryb ustawienia kamery</string>
+    <string name="cameraModeText">Usuń tło</string>
+    <string name="cameraMode2">Przywróć tło</string>
 
 </resources>

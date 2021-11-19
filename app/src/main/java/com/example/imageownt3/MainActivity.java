@@ -4,11 +4,17 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.Toast;
@@ -31,7 +37,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Locale;
 
 
 public class MainActivity extends AppCompatActivity
@@ -42,13 +50,11 @@ public class MainActivity extends AppCompatActivity
             Log.d("MainActivity", "Open CV successfully loaded");
         else
             Log.d("MainActivity", "Open CV error");
-
     }
 
-    private Button btnCamera;
     ImageView internetInfo;
     boolean connected;
-    private SwitchCompat imgSwitch, speechSwitch,textSwitch;
+    private SwitchCompat speechSwitch, textImgSwitch, vibSwitch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -57,15 +63,16 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         //LAYOUT
-        btnCamera = findViewById(R.id.btnCamera);
-        imgSwitch = findViewById(R.id.imgSwitch);
-        textSwitch = findViewById(R.id.textSwitch);
+        Button btnCamera = findViewById(R.id.btnCamera);
+        textImgSwitch = findViewById(R.id.textSwitch);
         speechSwitch = findViewById(R.id.speechSwitch);
         internetInfo = findViewById(R.id.internetInfo);
+        vibSwitch = findViewById(R.id.vibSwitch);
 
-        imgSwitch.setChecked(true);
-        textSwitch.setChecked(true);
+        textImgSwitch.setChecked(true);
         speechSwitch.setChecked(false);
+        vibSwitch.setChecked(true);
+
 
         btnCamera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,19 +80,19 @@ public class MainActivity extends AppCompatActivity
             {
                 if(connected)
                 {
-                    boolean isImgChecked = imgSwitch.isChecked();
-                    boolean isTextChecked = textSwitch.isChecked();
+                    boolean isTextChecked = textImgSwitch.isChecked();
                     boolean isSpeechChecked = speechSwitch.isChecked();
+                    boolean isVibChecked = vibSwitch.isChecked();
 
                     Intent intent = new Intent(MainActivity.this, DetectorActivity.class);
-                    intent.putExtra("imgOption",isImgChecked);
-                    intent.putExtra("textOption",isTextChecked);
+                    //intent.putExtra("imgOption",isImgChecked);
+                    intent.putExtra("textImgOption",isTextChecked);
                     intent.putExtra("speechOption",isSpeechChecked);
+                    intent.putExtra("vibrationOption", isVibChecked);
                     startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP));
                 }
                 else
                     Toast.makeText(MainActivity.this, "Brak połączenia z Internetem", Toast.LENGTH_SHORT).show();
-
             }
         });
 
@@ -116,4 +123,10 @@ public class MainActivity extends AppCompatActivity
             }
         });
     }
+    protected void onResume()
+    {
+        super.onResume();
+    }
+
+
 }
