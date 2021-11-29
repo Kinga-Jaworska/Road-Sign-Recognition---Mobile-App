@@ -30,4 +30,11 @@
 
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="CustomAlertDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:background">@color/blackTransparent</item>
+        <item name="android:textColor">@color/greenAccentDay</item>
+        <item name="android:textColorPrimary">@color/white</item>
+    </style>
+
 </resources>

@@ -8,7 +8,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
+import android.location.GnssStatus;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -29,6 +31,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.maps.MapView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
@@ -53,33 +56,48 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class DetectorActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, com.example.imageownt3.objectDetector.ImageRecognitionInterface
+public class DetectorActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, objectDetector.ImageRecognitionInterface, ILocationListener
 {
+    //OpenCV, Image Recognition
     private Mat mRgba;
     private Mat mGray;
     private CameraBridgeViewBase openCvCamera;
-    private String TAG = "DetectorActivity";
-    private objectDetector objectDetector;
-    TextView textView, textView2;
-    ImageView imageView1, imageView2;
-    private DatabaseReference imageReference;
-    String previousDetection="";
-    FirebaseDatabase database;
-    boolean speechOption, textImgOption, vibrationOption;
-    private TextToSpeech textToSpeech;
-    ArrayList<String> labelList = new ArrayList<>();
     int INPUT_SIZE = 416;
     boolean modelError=false;
     Timer timer = new Timer();
     FpsMeter fpsMeter = new FpsMeter();
+
+    //Layout
+    TextView textSign1, textSign2, speedText;
+    ImageView imageView1, imageView2;
     ConstraintLayout backgroundLayout;
     Button cameraOption;
+    MapView mapView;
     boolean flag=false;
+
+    //Options - selected in prev Activity
+    boolean speechOption, textImgOption, vibrationOption, speedOption, mapOption;
+
+    //Detector, Base, TTS
+    private String TAG = "DetectorActivity";
+    private objectDetector objectDetector;
+    private DatabaseReference imageReference;
+    String previousDetection="";
+    FirebaseDatabase database;
+    private TextToSpeech textToSpeech;
+    ArrayList<String> labelList = new ArrayList<>();
     Vibrator vib;
+
+    //Speed counting:
+    LocationManager locationManager;
+    float currentSpeedFloat;
+    private double speed = 0.0;
+    Boolean isGPSEnabled=false;
 
     private BaseLoaderCallback openCvLoaderCallback =new BaseLoaderCallback(this) //final ?
     {
@@ -113,21 +131,40 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        //GET Bundles
+        Bundle bundle = getIntent().getExtras();
+        textImgOption = bundle.getBoolean("textImgOption");
+        speechOption = bundle.getBoolean("speechOption");
+        vibrationOption = bundle.getBoolean("vibrationOption");
+        speedOption = bundle.getBoolean("speedOption");
+        mapOption = bundle.getBoolean("mapOption");
+
         //LAYOUT
-        setContentView(R.layout.activity_detector2);
-        textView = findViewById(R.id.textView);
+        if(mapOption)
+        {
+            setContentView(R.layout.acitivity_detector_map);
+            mapView =  findViewById(R.id.mapView);
+            //mapEnabled();
+        }
+        else
+            setContentView(R.layout.activity_detector);
+
+        textSign1 = findViewById(R.id.textView);
         imageView1 = findViewById(R.id.imgView);
-        textView2 = findViewById(R.id.textView2);
+        textSign2 = findViewById(R.id.textView2);
         imageView2 = findViewById(R.id.imgView2);
         backgroundLayout = findViewById(R.id.constraintLayout);
         cameraOption = findViewById(R.id.cameraOption);
+        speedText = findViewById(R.id.speedText);
 
         //Service
         vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
+        //Camera
         openCvCamera = (CameraBridgeViewBase) findViewById(R.id.cameraFrames);
 
         int MY_PERMISSIONS_REQUEST_CAMERA = 0;
+
         //check camera permission
         if (ContextCompat.checkSelfPermission(DetectorActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
         {
@@ -135,17 +172,11 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         }
 
         //openCvCamera.enableFpsMeter();  //fps display
-
         database = FirebaseDatabase.getInstance();
         imageReference = database.getReference("data").child("images");
 
-        //GET Bundles
-        Bundle bundle = getIntent().getExtras();
-        textImgOption = bundle.getBoolean("textImgOption");
-        speechOption = bundle.getBoolean("speechOption");
-        vibrationOption = bundle.getBoolean("vibrationOption");
-
         //SET OPTIONS
+        speedEnabled();
         textImgVisibility(textImgOption);
         speechEnable(speechOption);
 
@@ -172,7 +203,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                 else
                 {
                     backgroundLayout.setBackgroundResource(R.drawable.background_gradient);
-                    cameraOption.setText(R.string.cameraMode);
+                    cameraOption.setText(R.string.cameraMode1);
                     flag = false;
                 }
             }
@@ -186,19 +217,19 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
+            public void run()
+            {
+                runOnUiThread(new Runnable()
+                {
 
                     @Override
                     public void run()
                     {
-                        textView.setText("");
+                        textSign1.setText("");
                         //imageView1.setColorFilter(R.color.transparent);
                         //imageView1.setImageResource(R.drawable.ic_car);
                     }
                 });
-                //what you want to do
-
             }
         }, 0, 100000);//wait 0 ms before doing the action and do it evry 1000ms (1second)
     }
@@ -260,6 +291,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                             || result == TextToSpeech.LANG_NOT_SUPPORTED)
                     {
                         Log.e("TTS", "This Language is not supported");
+
                         //Info about instalation process
                         AlertDialog.Builder builder = new AlertDialog.Builder(DetectorActivity.this);
                         builder.setMessage(R.string.speachError).setTitle(R.string.speachErrorTitle);
@@ -283,22 +315,32 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         }
     }
 
+    private void speedEnabled()
+    {
+        if(speedOption)
+        {
+            speedText.setVisibility(View.VISIBLE);
+            speedService();
+        }
+        else
+            speedText.setVisibility(View.INVISIBLE);
+    }
     private void textImgVisibility(boolean textOption)
     {
         //TEXT OPTION
         if(!textOption)
         {
-            textView.setVisibility(View.INVISIBLE);
-            textView2.setVisibility(View.INVISIBLE);
+            textSign1.setVisibility(View.INVISIBLE);
+            textSign2.setVisibility(View.INVISIBLE);
             imageView1.setVisibility(View.INVISIBLE);
             imageView2.setVisibility(View.INVISIBLE);
         }
         else
         {
-            textView.setVisibility(View.VISIBLE);
-            textView2.setVisibility(View.VISIBLE);
-            textView.setText("");
-            textView2.setText("");
+            textSign1.setVisibility(View.VISIBLE);
+            textSign2.setVisibility(View.VISIBLE);
+            textSign1.setText("");
+            textSign2.setText("");
             imageView1.setVisibility(View.VISIBLE);
             imageView2.setVisibility(View.VISIBLE);
             internetState();
@@ -463,15 +505,14 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     private void setTextAndImage(String detectedClass)
     {
         getImageFromBase(detectedClass, imageView1);
-        textView.setText(detectedClass);
+        textSign1.setText(detectedClass);
 
         if(!previousDetection.isEmpty() && !previousDetection.equals(detectedClass))
         {
             getImageFromBase(previousDetection, imageView2);
-            textView2.setText(previousDetection);
+            textSign2.setText(previousDetection);
         }
     }
-
     private void setVibration(String detectedClass)
     {
         if(detectedClass.toLowerCase().contains("zakaz"))
@@ -490,28 +531,14 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         else
             textToSpeech.speak(detectedClass, TextToSpeech.QUEUE_ADD, null);
     }
-
     @Override
     public void onModelError(String errorM)
     {
         Log.d("modelError",errorM);
         modelError = true;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.modelError).setTitle(R.string.errorTitle);
-        builder.setPositiveButton(R.string.errorRestart, (dialogInterface, i) -> android.os.Process.killProcess(android.os.Process.myPid()));
-        builder.setNegativeButton(R.string.errorOk, (dialogInterface, i) -> {});
-        AlertDialog dialog = builder.create();
-        dialog.show();
-        //textView.setText(modelError);
+        displayAlertDialog(R.string.modelError,R.string.errorTitle,R.string.errorRestart,R.string.errorOk); //Dialog alert
     }
-
-    /*@Override
-    public void gpuDelegate(String gpuInfo)
-    {
-        //gpuInfoText.setText(gpuInfo);
-    }*/
-
     @Override
     public void onRecognitionTimer(String detection)
     {
@@ -548,6 +575,66 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             }
         });
     }
+    private void speedService()
+    {
+        //Permisja- lokalizacja:
+        try
+        {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED )
+            {
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
 
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);  //spr czy lokalizacja jest włączona
 
+        if(isGPSEnabled)
+        {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            this.updateSpeed(null);
+        }
+        else
+        {
+            displayAlertDialog(R.string.localizationError,R.string.errorTitle,R.string.errorRestart,R.string.errorOk); //Dialog alert
+        }
+    }
+
+    public void displayAlertDialog(int message, int title, int positiveBtn, int negativeBtn)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.CustomAlertDialog);
+        builder.setMessage(message).setTitle(title);
+        builder.setPositiveButton(positiveBtn, (dialogInterface, i) -> android.os.Process.killProcess(android.os.Process.myPid()));
+        builder.setNegativeButton(negativeBtn, (dialogInterface, i) -> {});
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void updateSpeed(CustomLocation location)
+    {
+        currentSpeedFloat = 0;
+        if(location != null)
+            currentSpeedFloat = location.getSpeed();
+
+        Formatter format = new Formatter(new StringBuilder());
+        format.format(Locale.US, "%.00f", currentSpeedFloat);
+        String currentSpeedStr = format.toString();
+        currentSpeedStr = currentSpeedStr.replace(' ', '0');
+
+        String strUnits = "km/h";
+        speedText.setText(String.format("%s %s", currentSpeedStr, strUnits));
+    }
+    @Override
+    public void onLocationChanged(Location location)
+    {
+        if(location != null)
+        {
+            CustomLocation myLocation = new CustomLocation(location);
+            this.updateSpeed(myLocation);
+        }
+    }
 }

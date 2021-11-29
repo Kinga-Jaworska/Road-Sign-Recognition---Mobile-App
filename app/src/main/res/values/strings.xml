@@ -16,6 +16,7 @@
     <string name="speachErrorYES">Przejdź do ustawień</string>
     <string name="speachErrorNO">Zamknij</string>
     <string name="errorTitle">Error</string>
+    <string name="localizationError">Włącz lokalizację, aby umożliwić pomiar prędkości.</string>
 
     <string name="errorRestart">Restartuj aplikację</string>
     <string name="errorOk">Zamknij okno</string>
@@ -24,8 +25,13 @@
     <string name="gpuInfo">GPU</string>
     <string name="cpuInfo">CPU</string>
 
-    <string name="cameraMode">Tryb ustawienia kamery</string>
-    <string name="cameraModeText">Usuń tło</string>
+    <!-- <string name="cameraMode">Tryb ustawienia kamery</string> -->
+    <string name="cameraMode1">Usuń tło</string>
     <string name="cameraMode2">Przywróć tło</string>
+    <string name="info">Connecting to GPS</string>
+    <string name="speedSwitch">Pomiar prędkości</string>
+    <string name="speedInfo">Prędkość</string>
+    <string name="mapSwitch">Widok z mapą Google</string>
+    <string name="imgSign">imageSign1</string>
 
 </resources>

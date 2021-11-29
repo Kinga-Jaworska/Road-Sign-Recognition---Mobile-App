@@ -31,4 +31,11 @@
 
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="CustomAlertDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:background">@color/lightBg</item>
+        <item name="android:textColor">@color/LightGreen</item>
+        <item name="android:textColorPrimary">@color/darkColor</item>
+    </style>
+
 </resources>

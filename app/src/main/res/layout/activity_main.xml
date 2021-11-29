@@ -28,7 +28,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="563dp" />
+        app:layout_constraintGuide_begin="648dp" />
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/textSwitch"
@@ -67,10 +67,37 @@
         android:paddingStart="10dp"
         android:text="@string/vibSwitch"
         android:textSize="16sp"
-        app:layout_constraintBottom_toTopOf="@+id/guideline2"
+        app:layout_constraintBottom_toTopOf="@+id/speedSwitch"
         app:layout_constraintEnd_toEndOf="@+id/internetInfo"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/internetInfo" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/speedSwitch"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:button="@drawable/ic_speed"
+        android:fontFamily="@font/quantico"
+        android:paddingStart="10dp"
+        android:text="@string/speedSwitch"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/mapSwitch"
+        app:layout_constraintEnd_toEndOf="@+id/internetInfo"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="@+id/internetInfo" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/mapSwitch"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:button="@drawable/ic_map"
+        android:fontFamily="@font/quantico"
+        android:paddingStart="10dp"
+        android:text="@string/mapSwitch"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/guideline2"
+        app:layout_constraintEnd_toEndOf="@+id/speedSwitch"
+        app:layout_constraintStart_toStartOf="@+id/speedSwitch" />
 
     <TextView
         android:id="@+id/textView3"

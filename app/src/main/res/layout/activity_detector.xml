@@ -53,9 +53,9 @@
             android:layout_height="wrap_content"
             android:drawableTint="?attr/colorSecondaryVariant"
             android:drawableBottom="@drawable/ic_camera"
-            android:text="@string/cameraModeText"
+            android:text="@string/cameraMode1"
             android:textColor="?android:attr/textColor"
-            android:tooltipText="@string/cameraMode"
+            android:tooltipText="@string/cameraMode1"
             android:backgroundTint="@color/LightGreen"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -71,9 +71,9 @@
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="24sp"
+            app:layout_constraintBottom_toTopOf="@+id/speedText"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/imgView2"
-            app:layout_constraintTop_toBottomOf="@+id/imgView2" />
+            app:layout_constraintStart_toStartOf="@+id/imgView2" />
 
         <ImageView
             android:id="@+id/imgView"
@@ -89,12 +89,25 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/speedText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/quantico"
+            android:text="@string/speedInfo"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toTopOf="@+id/cameraOption"
+            app:layout_constraintEnd_toEndOf="@+id/textView2"
+            app:layout_constraintStart_toStartOf="@+id/textView2" />
+
         <ImageView
             android:id="@+id/imgView2"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:scaleType="fitCenter"
-            app:layout_constraintBottom_toTopOf="@+id/guideline10"
+            app:layout_constraintBottom_toTopOf="@+id/textView2"
             app:layout_constraintEnd_toEndOf="@+id/imgView"
             app:layout_constraintStart_toStartOf="@+id/imgView"
             app:layout_constraintTop_toTopOf="@+id/guideline6" />
@@ -125,7 +138,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_begin="617dp" />
+            app:layout_constraintGuide_begin="535dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
