@@ -11,10 +11,13 @@ import android.content.pm.PackageManager;
 import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.AudioManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
+import android.telecom.TelecomManager;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -81,7 +84,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     boolean flag=false;
 
     //Options - selected in prev Activity
-    boolean speechOption, textImgOption, vibrationOption, speedOption, mapOption;
+    boolean speechOption, textImgOption, vibrationOption, speedOption, mapOption, silenceOption;
 
     //Detector, Base, TTS
     private String TAG = "DetectorActivity";
@@ -137,13 +140,31 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         speechOption = bundle.getBoolean("speechOption");
         vibrationOption = bundle.getBoolean("vibrationOption");
         speedOption = bundle.getBoolean("speedOption");
+        silenceOption = bundle.getBoolean("silenceOption");
+
+        //TEST:
         mapOption = bundle.getBoolean("mapOption");
+
+        //SILENCE MODE:
+        adjustAudio(silenceOption);
 
         //LAYOUT
         if(mapOption)
         {
             setContentView(R.layout.acitivity_detector_map);
             mapView =  findViewById(R.id.mapView);
+            Button mapBtn = findViewById(R.id.mapBtn);
+            mapBtn.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View v)
+                {
+                    /*String uri = String.format(Locale.ENGLISH, "http://maps.google.com/maps?saddr=%f,%f(%s)&daddr=%f,%f (%s)", sourceLatitude, sourceLongitude, "Home Sweet Home", destinationLatitude, destinationLongitude, "Where the party is at");
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                    intent.setPackage("com.google.android.apps.maps");
+                    startActivity(intent);    */
+                }
+            });
             //mapEnabled();
         }
         else
@@ -156,7 +177,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         backgroundLayout = findViewById(R.id.constraintLayout);
         cameraOption = findViewById(R.id.cameraOption);
         speedText = findViewById(R.id.speedText);
-
+        
         //Service
         vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -278,43 +299,51 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     {
         if(speechOption)
         {
-
-            textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener()
+            //TODO: Exception on other device - null pointer for text to speech
+            try
             {
-                @Override
-                public void onInit(int status)
+                textToSpeech = new TextToSpeech(DetectorActivity.this, new TextToSpeech.OnInitListener()
                 {
-                    Locale locale = new Locale("pl_PL");
-                    int result = textToSpeech.setLanguage(locale);
-
-                    if (result == TextToSpeech.LANG_MISSING_DATA
-                            || result == TextToSpeech.LANG_NOT_SUPPORTED)
+                    @Override
+                    public void onInit(int status)
                     {
-                        Log.e("TTS", "This Language is not supported");
+                        Locale locale = new Locale("pl_PL");
+                        int result = textToSpeech.setLanguage(locale);
 
-                        //Info about instalation process
-                        AlertDialog.Builder builder = new AlertDialog.Builder(DetectorActivity.this);
-                        builder.setMessage(R.string.speachError).setTitle(R.string.speachErrorTitle);
-                        builder.setIcon(R.drawable.ic_language);
-                        builder.setPositiveButton(R.string.speachErrorNO, (dialogInterface, i) -> android.os.Process.killProcess(android.os.Process.myPid()));
-                        builder.setNegativeButton(R.string.speachErrorYES, (dialogInterface, i) -> {
-                            Intent intent = new Intent();
-                            intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$LanguageAndInputSettingsActivity"));
-                            startActivity(intent);
-                        });
+                        if (result == TextToSpeech.LANG_MISSING_DATA
+                                || result == TextToSpeech.LANG_NOT_SUPPORTED)
+                        {
+                            Log.e("TTS", "This Language is not supported");
 
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+                            //Info about instalation process
+                            AlertDialog.Builder builder = new AlertDialog.Builder(DetectorActivity.this);
+                            builder.setMessage(R.string.speachError).setTitle(R.string.speachErrorTitle);
+                            builder.setIcon(R.drawable.ic_language);
+                            builder.setPositiveButton(R.string.speachErrorNO, (dialogInterface, i) -> android.os.Process.killProcess(android.os.Process.myPid()));
+                            builder.setNegativeButton(R.string.speachErrorYES, (dialogInterface, i) -> {
+                                Intent intent = new Intent();
+                                intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$LanguageAndInputSettingsActivity"));
+                                startActivity(intent);
+                            });
+
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                        }
+                        else
+                        {
+                            textToSpeech.setLanguage(locale);
+                        }
                     }
-                    else
-                    {
-                        textToSpeech.setLanguage(locale);
-                    }
-                }
-            });
+                });
+
+            }
+            catch(Exception exception)
+            {
+                Toast.makeText(this, "error "+exception.toString(), Toast.LENGTH_SHORT).show();
+            }
+
         }
     }
-
     private void speedEnabled()
     {
         if(speedOption)
@@ -424,6 +453,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0,this,openCvLoaderCallback);
         }
         //timer.cancel();
+        //adjustAudio(false); //?
     }
 
     @Override
@@ -441,6 +471,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 
         timer.cancel();
         super.onPause();
+       // adjustAudio(false); ?
     }
 
     @Override
@@ -449,6 +480,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         if (openCvCamera != null)
             openCvCamera.disableView();
         timer.cancel();
+        adjustAudio(false); //?
     }
     @Override
     public void onCameraViewStarted(int width, int height)
@@ -485,14 +517,22 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             @Override
             public void run()
             {
-                if (speechOption)
-                    speakOnRecognition(detectedClass);
 
                 if (textImgOption)
                     setTextAndImage(detectedClass);
 
+                if (speechOption)
+                    speakOnRecognition(detectedClass);
+
                 if(vibrationOption)
-                    setVibration(detectedClass);// if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    setVibration(detectedClass); //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
+                if(speedOption)
+                {
+
+                    checkSpeedLimit(currentSpeedFloat,detectedClass);
+                }
+
 
                 previousDetection = detectedClass;
 
@@ -628,6 +668,22 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         String strUnits = "km/h";
         speedText.setText(String.format("%s %s", currentSpeedStr, strUnits));
     }
+
+    private void checkSpeedLimit(float currentSpeedFloat, String detectedClass)
+    {
+        if(detectedClass.toLowerCase().contains("teren zabudowany") && currentSpeedFloat>50)
+        {
+            speedText.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.alertSpeed));
+            speedText.setTextSize(25);
+        }
+        else
+        {
+            speedText.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.white));
+            speedText.setTextSize(20);
+        }
+
+            //speedText.setTextColor(R.color.darkColor);
+    }
     @Override
     public void onLocationChanged(Location location)
     {
@@ -635,6 +691,31 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         {
             CustomLocation myLocation = new CustomLocation(location);
             this.updateSpeed(myLocation);
+        }
+    }
+
+    public void adjustAudio(boolean setMute)
+    {
+        AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+        {
+            int adJustMute;
+            if (setMute) {
+                adJustMute = AudioManager.ADJUST_MUTE;
+            } else {
+                adJustMute = AudioManager.ADJUST_UNMUTE;
+            }
+            audioManager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, adJustMute, 0);
+            audioManager.adjustStreamVolume(AudioManager.STREAM_ALARM, adJustMute, 0);
+            audioManager.adjustStreamVolume(AudioManager.STREAM_RING, adJustMute, 0);
+            audioManager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, adJustMute, 0);
+        }
+        else
+        {
+            audioManager.setStreamMute(AudioManager.STREAM_NOTIFICATION, setMute);
+            audioManager.setStreamMute(AudioManager.STREAM_ALARM, setMute);
+            audioManager.setStreamMute(AudioManager.STREAM_RING, setMute);
+            audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, setMute);
         }
     }
 }

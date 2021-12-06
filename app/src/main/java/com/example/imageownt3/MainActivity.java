@@ -6,14 +6,24 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.AppOpsManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.telecom.TelecomManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -40,6 +50,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -57,7 +70,7 @@ public class MainActivity extends AppCompatActivity
 
     ImageView internetInfo;
     boolean connected;
-    private SwitchCompat speechSwitch, textImgSwitch, vibSwitch, speedSwitch, mapSwitch;
+    private SwitchCompat speechSwitch, textImgSwitch, vibSwitch, speedSwitch, silenceSwitch; //mapSwitch
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -72,14 +85,15 @@ public class MainActivity extends AppCompatActivity
         internetInfo = findViewById(R.id.internetInfo);
         vibSwitch = findViewById(R.id.vibSwitch);
         speedSwitch = findViewById(R.id.speedSwitch);
-        mapSwitch = findViewById(R.id.mapSwitch);
+        silenceSwitch = findViewById(R.id.silenceSwitch);
 
         textImgSwitch.setChecked(true);
         speechSwitch.setChecked(false);
         speedSwitch.setChecked(false);
         vibSwitch.setChecked(true);
-        mapSwitch.setChecked(false);
+        silenceSwitch.setChecked(false);
 
+        //TEST
         btnCamera.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -91,7 +105,7 @@ public class MainActivity extends AppCompatActivity
                     boolean isSpeechChecked = speechSwitch.isChecked();
                     boolean isVibChecked = vibSwitch.isChecked();
                     boolean isSpeedChecked = speedSwitch.isChecked();
-                    boolean isMapChecked = mapSwitch.isChecked();
+                    boolean isSilenceChecked = silenceSwitch.isChecked();
 
                     Intent intent = new Intent(MainActivity.this, DetectorActivity.class);
                     //intent.putExtra("imgOption",isImgChecked);
@@ -99,16 +113,12 @@ public class MainActivity extends AppCompatActivity
                     intent.putExtra("speechOption",isSpeechChecked);
                     intent.putExtra("vibrationOption", isVibChecked);
                     intent.putExtra("speedOption", isSpeedChecked);
-                    intent.putExtra("mapOption", isMapChecked);
+                    intent.putExtra("silenceOption", isSilenceChecked);
+                    //intent.putExtra("mapOption", isMapChecked);
                     startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP));
                 }
                 else
                     Toast.makeText(MainActivity.this, "Brak połączenia z Internetem", Toast.LENGTH_SHORT).show();
-
-                //TEST Speed Measure:
-
-//                Intent intent = new Intent(MainActivity.this, TestActivity.class);
-//                startActivity(intent);
             }
         });
 

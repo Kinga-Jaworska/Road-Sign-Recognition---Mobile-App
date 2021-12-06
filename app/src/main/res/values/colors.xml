@@ -12,10 +12,11 @@
     <color name="white">#FFFFFFFF</color>
     <!-- new colors -->
     <color name="lightBg">#D8D8D8</color>
-    <color name="LightGreen">#8BC34A</color>
+    <color name="LightGreen">#4CAF50</color>
     <color name="darkGray">#2D2D2E</color>
     <color name="darkColor">#121311</color>
 
     <color name="greenAccentTransparent">#70275E29</color>
     <color name="greenAccentDay">#2CAA30</color>
+  <color name="alertSpeed">#FF5722</color>
 </resources>

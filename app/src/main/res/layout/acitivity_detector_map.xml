@@ -83,8 +83,23 @@
             android:textColor="?android:attr/textColor"
             android:tooltipText="@string/cameraMode1"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/guideline3"
             app:layout_constraintStart_toStartOf="parent" />
+
+        <Button
+            android:id="@+id/mapBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/LightGreen"
+            android:drawableBottom="@drawable/ic_navig"
+            android:drawableTint="?attr/colorSecondaryVariant"
+            android:text="@string/mapBtn"
+            android:textColor="?android:attr/textColor"
+            android:tooltipText="@string/cameraMode1"
+            app:layout_constraintBottom_toBottomOf="@+id/cameraOption"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/cameraOption"
+            app:layout_constraintTop_toTopOf="@+id/cameraOption" />
 
         <TextView
             android:id="@+id/textView2"

@@ -28,25 +28,21 @@ public class CustomLocation extends Location
     @Override
     public float distanceTo(Location dest)
     {
-        //float nDistance = super.distanceTo(dest);
         return super.distanceTo(dest);
     }
     @Override
     public float getAccuracy()
     {
-        //float nAccuracy = super.getAccuracy();
         return super.getAccuracy();
     }
     @Override
     public double getAltitude()
     {
-        //double nAltitude = super.getAltitude();
         return super.getAltitude();
     }
     @Override
     public float getSpeed()
     {
-        //float nSpeed = super.getSpeed() * 3.6f;
-        return super.getSpeed() * 3.6f;
+        return super.getSpeed() * 3.6f; //converted to km/h
     }
 }

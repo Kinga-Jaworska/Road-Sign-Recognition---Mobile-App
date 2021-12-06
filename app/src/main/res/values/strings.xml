@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Sign</string>
+    <string name="app_name">Nazwa</string>
     <string name="btnOption">Opcje</string>
     <string name="imgSwitch">Informacja obrazkowa i tekstowa</string>
     <string name="speechSwitch">Informacja dźwiękowa</string>
@@ -33,5 +33,9 @@
     <string name="speedInfo">Prędkość</string>
     <string name="mapSwitch">Widok z mapą Google</string>
     <string name="imgSign">imageSign1</string>
+
+    <!-- Navigations/Map -->
+    <string name="mapBtn">Włącz nawigację</string>
+    <string name="silentMode">Włącz tryb cichy</string>
 
 </resources>
