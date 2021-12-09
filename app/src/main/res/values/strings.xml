@@ -17,6 +17,7 @@
     <string name="speachErrorNO">Zamknij</string>
     <string name="errorTitle">Error</string>
     <string name="localizationError">Włącz lokalizację, aby umożliwić pomiar prędkości.</string>
+    <string name="countingModelError">Błąd przetwarzania modelu sztucznej inteligencji</string>
 
     <string name="errorRestart">Restartuj aplikację</string>
     <string name="errorOk">Zamknij okno</string>
@@ -36,6 +37,12 @@
 
     <!-- Navigations/Map -->
     <string name="mapBtn">Włącz nawigację</string>
+
+
+    <!-- SILENT MODE -->
     <string name="silentMode">Włącz tryb cichy</string>
+
+    <string name="silentModeTitle">Informacja</string>
+    <string name="silentModeInf">Urządzenie jest już w trybie wyciszenia</string>
 
 </resources>

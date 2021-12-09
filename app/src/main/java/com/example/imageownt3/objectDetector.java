@@ -3,17 +3,11 @@ package com.example.imageownt3;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.ml.modeldownloader.CustomModel;
 import com.google.firebase.ml.modeldownloader.CustomModelDownloadConditions;
 import com.google.firebase.ml.modeldownloader.DownloadType;
@@ -22,7 +16,6 @@ import com.google.firebase.ml.modeldownloader.FirebaseModelDownloader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.tensorflow.lite.Delegate;
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.gpu.GpuDelegate;
 
@@ -121,77 +114,84 @@ public class objectDetector
             @Override
             public void onFailure(@NonNull Exception e)
             {
-                ImageRecognitionInterface.onModelError(e.toString());
+                ImageRecognitionInterface.onLoadModelError(e.toString()); //błąd wczytywania modelu AI
             }
         });
     }
 
     public Mat recognizeImage(Mat matImage)
     {
-        //90°
-        Mat rotatedMatImage = new Mat();
-        Core.flip(matImage.t(), rotatedMatImage, 1);
+        try
+        {
+            //90°
+            Mat rotatedMatImage = new Mat();
+            Core.flip(matImage.t(), rotatedMatImage, 1);
 
 
-        //convert to Bitmap
-        //bitmap = null;
-        Bitmap bitmap = Bitmap.createBitmap(rotatedMatImage.cols(), rotatedMatImage.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(rotatedMatImage, bitmap);
+            //convert to Bitmap
+            //bitmap = null;
+            Bitmap bitmap = Bitmap.createBitmap(rotatedMatImage.cols(), rotatedMatImage.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(rotatedMatImage, bitmap);
 
-        //define
-        height = bitmap.getHeight();
-        width = bitmap.getWidth();
+            //define
+            height = bitmap.getHeight();
+            width = bitmap.getWidth();
 
-        //scale
-        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
-        ByteBuffer byteBuffer = convertBitmapToByteBuffer(scaledBitmap);
+            //scale
+            Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
+            ByteBuffer byteBuffer = convertBitmapToByteBuffer(scaledBitmap);
 
-        Object[] input = new Object[1];
+            Object[] input = new Object[1];
 
-        input[0] = byteBuffer;
+            input[0] = byteBuffer;
 
-        Map<Integer, Object> outputMap = new TreeMap<>();
+            Map<Integer, Object> outputMap = new TreeMap<>();
 
-        Log.d("sizeList2",String.valueOf(labelList.size()));
+            Log.d("sizeList2",String.valueOf(labelList.size()));
 
-        outputMap.put(0, new float[1][OUTPUT_TINY[0]][4]);
-        outputMap.put(1, new float[1][OUTPUT_TINY[1]][labelList.size()]); //labels.size()
+            outputMap.put(0, new float[1][OUTPUT_TINY[0]][4]);
+            outputMap.put(1, new float[1][OUTPUT_TINY[1]][labelList.size()]); //labels.size()
 
-        interpreter.runForMultipleInputsOutputs(input, outputMap);
+            interpreter.runForMultipleInputsOutputs(input, outputMap);
 
-        int gridWidth = OUTPUT_TINY[0];
-        //float[][][] bboxes = (float[][][]) outputMap.get(0);
-        float[][][] out_score = (float[][][]) outputMap.get(1);
+            int gridWidth = OUTPUT_TINY[0];
+            //float[][][] bboxes = (float[][][]) outputMap.get(0);
+            float[][][] out_score = (float[][][]) outputMap.get(1);
 
-        for (int i = 0; i < gridWidth; i++) {
-            float maxClass = 0;
-            int detectedClass = -1;
-            final float[] classes = new float[labelList.size()];
-
-            for (int c = 0; c < labelList.size(); c++)
+            for (int i = 0; i < gridWidth; i++)
             {
-                classes[c] = out_score[0][i][c];
-            }
-            for (int c = 0; c < labelList.size(); ++c)
-            {
-                if (classes[c] > maxClass) {
-                    detectedClass = c;
-                    maxClass = classes[c];
+                float maxClass = 0;
+                int detectedClass = -1;
+                final float[] classes = new float[labelList.size()];
+
+                for (int c = 0; c < labelList.size(); c++)
+                {
+                    classes[c] = out_score[0][i][c];
+                }
+                for (int c = 0; c < labelList.size(); ++c)
+                {
+                    if (classes[c] > maxClass) {
+                        detectedClass = c;
+                        maxClass = classes[c];
+                    }
+                }
+
+                final float score = maxClass;
+                if (score > 0.85)
+                {
+                    ImageRecognitionInterface.onRecognition(String.valueOf(labelList.get(detectedClass)));
+                    //ImageRecognitionInterface.onRecognitionTimer(String.valueOf(labelList.get(detectedClass)));
                 }
             }
-
-            final float score = maxClass;
-            if (score > 0.85)
-            {
-                ImageRecognitionInterface.onRecognition(String.valueOf(labelList.get(detectedClass)));
-                //ImageRecognitionInterface.onRecognitionTimer(String.valueOf(labelList.get(detectedClass)));
-            }
+            //-90°
+            Core.flip(rotatedMatImage.t(),matImage,0);
         }
-
-        //-90°
-        Core.flip(rotatedMatImage.t(),matImage,0);
-
+        catch(Exception ex)
+        {
+            ImageRecognitionInterface.onModelError("Błąd obliczeń");
+        }
         return matImage;
+
     }
 
     private ByteBuffer convertBitmapToByteBuffer(Bitmap bitmap)
@@ -241,8 +241,9 @@ public class objectDetector
     public interface ImageRecognitionInterface
     {
         void onRecognition(String detectedClass);
+        void onLoadModelError(String modelError);
         void onModelError(String modelError);
-        //void gpuDelegate(String gpuInfo);
+        // void gpuDelegate(String gpuInfo);
         void onRecognitionTimer(String valueOf);
     }
 

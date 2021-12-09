@@ -8,16 +8,13 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
-import android.telecom.TelecomManager;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -102,7 +99,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     private double speed = 0.0;
     Boolean isGPSEnabled=false;
 
-    private BaseLoaderCallback openCvLoaderCallback =new BaseLoaderCallback(this) //final ?
+    final private BaseLoaderCallback openCvLoaderCallback =new BaseLoaderCallback(this) //final ?
     {
         @Override
         public void onManagerConnected(int status)
@@ -232,7 +229,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 
         //timer.cancel();//stop the timer
     }
-
     private void timerBuffor()
     {
         timer = new Timer();
@@ -294,7 +290,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             }
         });
     }
-
     private void speechEnable(boolean speechOption)
     {
         if(speechOption)
@@ -374,7 +369,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             imageView2.setVisibility(View.VISIBLE);
             internetState();
         }
-
     }
 
     public ArrayList<String> getLabels()
@@ -426,7 +420,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                 public void onFailure(@NonNull Exception exception) {
                     // Handle any errors
                     Log.d("storage","Error "+exception.toString());
-                    onModelError("bląd pliku");
+                    onLoadModelError("bląd pliku");
                 }
             });
         }
@@ -453,8 +447,9 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0,this,openCvLoaderCallback);
         }
         //timer.cancel();
-        //adjustAudio(false); //?
+        adjustAudio(silenceOption); //?
     }
+
 
     @Override
     protected void onPause()
@@ -475,13 +470,22 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onDestroy()
+    {
+        adjustAudio(false);
         super.onDestroy();
         if (openCvCamera != null)
             openCvCamera.disableView();
         timer.cancel();
-        adjustAudio(false); //?
     }
+
+    @Override
+    protected void onStop()
+    {
+        adjustAudio(false);
+        super.onStop();
+    }
+
     @Override
     public void onCameraViewStarted(int width, int height)
     {
@@ -504,8 +508,12 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 
         if(!modelError) //objectDetector!=null &&
             objectDetector.recognizeImage(mRgba);
+        /*else
+        {
+            openCvCamera.disableView();
+            openCvCamera.setVisibility(SurfaceView.INVISIBLE);
+        }*/
 
-        //return out;
         return inputFrame.rgba();
     }
 
@@ -517,7 +525,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             @Override
             public void run()
             {
-
                 if (textImgOption)
                     setTextAndImage(detectedClass);
 
@@ -528,10 +535,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                     setVibration(detectedClass); //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
 
                 if(speedOption)
-                {
-
                     checkSpeedLimit(currentSpeedFloat,detectedClass);
-                }
 
 
                 previousDetection = detectedClass;
@@ -571,14 +575,31 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         else
             textToSpeech.speak(detectedClass, TextToSpeech.QUEUE_ADD, null);
     }
+
     @Override
-    public void onModelError(String errorM)
+    public void onLoadModelError(String errorM) //Load model Error
     {
         Log.d("modelError",errorM);
         modelError = true;
-
-        displayAlertDialog(R.string.modelError,R.string.errorTitle,R.string.errorRestart,R.string.errorOk); //Dialog alert
+        displayAlertDialog(R.string.modelError,R.string.errorTitle,R.string.errorRestart,true); //Dialog alert
     }
+
+    @Override
+    public void onModelError(String errorM)  //Counting Error
+    {
+        Log.d("modelError",errorM);
+        modelError = true;
+        runOnUiThread(new Runnable()
+        {
+            public void run()
+            {
+                displayAlertDialog(R.string.countingModelError,R.string.errorTitle,R.string.errorRestart,false); //Dialog alert
+            }
+        });
+        openCvCamera.disableView();
+        openCvCamera.setVisibility(SurfaceView.INVISIBLE);
+    }
+
     @Override
     public void onRecognitionTimer(String detection)
     {
@@ -600,7 +621,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                     Image img = ds.getValue(Image.class);
                     if(img!=null)
                     {
-                        if((img.getName().toLowerCase().contains(detectedClass.toLowerCase())))
+                        if((img.getName().toLowerCase().equals(detectedClass.toLowerCase())))
                         {
                             Glide.with(getBaseContext()).load(img.getLink()).into(imgView);
                         }
@@ -640,16 +661,21 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         }
         else
         {
-            displayAlertDialog(R.string.localizationError,R.string.errorTitle,R.string.errorRestart,R.string.errorOk); //Dialog alert
+            displayAlertDialog(R.string.localizationError,R.string.errorTitle,R.string.errorRestart,true); //Dialog alert
         }
     }
 
-    public void displayAlertDialog(int message, int title, int positiveBtn, int negativeBtn)
+    public void displayAlertDialog(int message, int title, int positiveBtn, boolean isNegativeBtn)
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.CustomAlertDialog);
         builder.setMessage(message).setTitle(title);
         builder.setPositiveButton(positiveBtn, (dialogInterface, i) -> android.os.Process.killProcess(android.os.Process.myPid()));
-        builder.setNegativeButton(negativeBtn, (dialogInterface, i) -> {});
+
+        if(isNegativeBtn)
+        {
+            builder.setNegativeButton(R.string.errorOk, (dialogInterface, i) -> {});
+        }
+
         AlertDialog dialog = builder.create();
         dialog.show();
     }
@@ -681,9 +707,8 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             speedText.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.white));
             speedText.setTextSize(20);
         }
-
-            //speedText.setTextColor(R.color.darkColor);
     }
+
     @Override
     public void onLocationChanged(Location location)
     {
@@ -697,25 +722,36 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     public void adjustAudio(boolean setMute)
     {
         AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+
+
+        if (setMute && audioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL) //silent mode
         {
-            int adJustMute;
-            if (setMute) {
-                adJustMute = AudioManager.ADJUST_MUTE;
-            } else {
-                adJustMute = AudioManager.ADJUST_UNMUTE;
+            try {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
+                audioManager.adjustStreamVolume(AudioManager.STREAM_ALARM, AudioManager.ADJUST_MUTE, 0);
+                audioManager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_MUTE, 0);
+                audioManager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0);
             }
-            audioManager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, adJustMute, 0);
-            audioManager.adjustStreamVolume(AudioManager.STREAM_ALARM, adJustMute, 0);
-            audioManager.adjustStreamVolume(AudioManager.STREAM_RING, adJustMute, 0);
-            audioManager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, adJustMute, 0);
+            catch (Exception ex)
+            {
+                //Alert informacyjny
+                displayAlertDialog(R.string.silentModeInf,R.string.silentModeTitle,R.string.errorRestart,true);
+            }
         }
-        else
+        else //turn off silent mode
         {
-            audioManager.setStreamMute(AudioManager.STREAM_NOTIFICATION, setMute);
-            audioManager.setStreamMute(AudioManager.STREAM_ALARM, setMute);
-            audioManager.setStreamMute(AudioManager.STREAM_RING, setMute);
-            audioManager.setStreamMute(AudioManager.STREAM_SYSTEM, setMute);
+            try
+            {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
+                audioManager.adjustStreamVolume(AudioManager.STREAM_ALARM, AudioManager.ADJUST_UNMUTE, 0);
+                audioManager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_UNMUTE, 0);
+                audioManager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0);
+            }
+            catch (Exception ex)
+            {
+                Log.d("silentMode","Error programmatically disable silent mode "+ex);
+            }
+
         }
     }
 }
