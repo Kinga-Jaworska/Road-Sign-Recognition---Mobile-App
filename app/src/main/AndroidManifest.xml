@@ -4,7 +4,7 @@
     package="com.example.imageownt3">
 
     <!-- INTERNET -->
-    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
+    <!-- <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" /> -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- CAMERA -->
     <uses-permission android:name="android.permission.CAMERA" />

@@ -81,7 +81,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     boolean flag=false;
 
     //Options - selected in prev Activity
-    boolean speechOption, textImgOption, vibrationOption, speedOption, mapOption, silenceOption;
+    boolean speechOption, textImgOption, vibrationOption, speedOption, silenceOption;
 
     //Detector, Base, TTS
     private String TAG = "DetectorActivity";
@@ -93,13 +93,22 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     ArrayList<String> labelList = new ArrayList<>();
     Vibrator vib;
 
-    //Speed counting:
+    //Speed counting
     LocationManager locationManager;
     float currentSpeedFloat;
     private double speed = 0.0;
     Boolean isGPSEnabled=false;
 
-    final private BaseLoaderCallback openCvLoaderCallback =new BaseLoaderCallback(this) //final ?
+    //Permissions
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 2;
+    //private static final int  MY_PERMISSIONS_REQUEST_CAMERA = 0;
+    private static MainActivity instance;
+
+    public static MainActivity getInstance() {
+        return instance;
+    }
+    final private BaseLoaderCallback openCvLoaderCallback =new BaseLoaderCallback(this) //final
     {
         @Override
         public void onManagerConnected(int status)
@@ -131,6 +140,13 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+
+        //check camera permission
+        /*if (ContextCompat.checkSelfPermission(DetectorActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
+        {
+            ActivityCompat.requestPermissions(DetectorActivity.this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
+        }*/
+
         //GET Bundles
         Bundle bundle = getIntent().getExtras();
         textImgOption = bundle.getBoolean("textImgOption");
@@ -139,33 +155,13 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         speedOption = bundle.getBoolean("speedOption");
         silenceOption = bundle.getBoolean("silenceOption");
 
-        //TEST:
-        mapOption = bundle.getBoolean("mapOption");
+
 
         //SILENCE MODE:
         adjustAudio(silenceOption);
 
         //LAYOUT
-        if(mapOption)
-        {
-            setContentView(R.layout.acitivity_detector_map);
-            mapView =  findViewById(R.id.mapView);
-            Button mapBtn = findViewById(R.id.mapBtn);
-            mapBtn.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    /*String uri = String.format(Locale.ENGLISH, "http://maps.google.com/maps?saddr=%f,%f(%s)&daddr=%f,%f (%s)", sourceLatitude, sourceLongitude, "Home Sweet Home", destinationLatitude, destinationLongitude, "Where the party is at");
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-                    intent.setPackage("com.google.android.apps.maps");
-                    startActivity(intent);    */
-                }
-            });
-            //mapEnabled();
-        }
-        else
-            setContentView(R.layout.activity_detector);
+        setContentView(R.layout.activity_detector);
 
         textSign1 = findViewById(R.id.textView);
         imageView1 = findViewById(R.id.imgView);
@@ -181,13 +177,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         //Camera
         openCvCamera = (CameraBridgeViewBase) findViewById(R.id.cameraFrames);
 
-        int MY_PERMISSIONS_REQUEST_CAMERA = 0;
 
-        //check camera permission
-        if (ContextCompat.checkSelfPermission(DetectorActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
-        {
-            ActivityCompat.requestPermissions(DetectorActivity.this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
-        }
 
         //openCvCamera.enableFpsMeter();  //fps display
         database = FirebaseDatabase.getInstance();
@@ -278,10 +268,9 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                 if (!connected)
                 {
                     //imageView.setVisibility(View.VISIBLE);
-                    imageView1.setImageResource(R.drawable.ic_wifi_off);
-                    imageView2.setImageResource(R.drawable.ic_wifi_off);
-                    // Toast.makeText(getApplicationContext(),"Brak Internetu",Toast.LENGTH_SHORT);
-                    //ImageRecognitionInterface.onInternetConnection("false");
+                    //imageView1.setImageResource(R.drawable.ic_wifi_off);
+                    //imageView2.setImageResource(R.drawable.ic_wifi_off);
+                    Toast.makeText(getApplicationContext(),"Brak połączenia z Internetem",Toast.LENGTH_SHORT);
                 }
             }
             @Override
@@ -294,61 +283,59 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     {
         if(speechOption)
         {
-            //TODO: Exception on other device - null pointer for text to speech
             try
             {
-                textToSpeech = new TextToSpeech(DetectorActivity.this, new TextToSpeech.OnInitListener()
+                textToSpeech = new TextToSpeech(DetectorActivity.this, status ->
                 {
-                    @Override
-                    public void onInit(int status)
+                    if (status == TextToSpeech.SUCCESS)
                     {
+
                         Locale locale = new Locale("pl_PL");
                         int result = textToSpeech.setLanguage(locale);
-
-                        if (result == TextToSpeech.LANG_MISSING_DATA
-                                || result == TextToSpeech.LANG_NOT_SUPPORTED)
-                        {
-                            Log.e("TTS", "This Language is not supported");
-
-                            //Info about instalation process
-                            AlertDialog.Builder builder = new AlertDialog.Builder(DetectorActivity.this);
-                            builder.setMessage(R.string.speachError).setTitle(R.string.speachErrorTitle);
-                            builder.setIcon(R.drawable.ic_language);
-                            builder.setPositiveButton(R.string.speachErrorNO, (dialogInterface, i) -> android.os.Process.killProcess(android.os.Process.myPid()));
-                            builder.setNegativeButton(R.string.speachErrorYES, (dialogInterface, i) -> {
-                                Intent intent = new Intent();
-                                intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$LanguageAndInputSettingsActivity"));
-                                startActivity(intent);
-                            });
-
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
-                        else
-                        {
-                            textToSpeech.setLanguage(locale);
-                        }
+                        Log.d("OnInitListener", "Text to speech engine started successfully.");
+                        checkTTSLanguage(result,locale);
+                    }
+                    else
+                    {
+                       displayAlertDialog(R.string.TTSError,R.string.errorTitle,R.string.errorRestart,true);
                     }
                 });
-
             }
             catch(Exception exception)
             {
                 Toast.makeText(this, "error "+exception.toString(), Toast.LENGTH_SHORT).show();
+                Log.d("speechError",exception.toString());
             }
-
         }
     }
-    private void speedEnabled()
+
+    private void checkTTSLanguage(int result, Locale locale)
     {
-        if(speedOption)
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED)
         {
-            speedText.setVisibility(View.VISIBLE);
-            speedService();
+            Log.e("speechError", "This Language is not supported");
+
+            //Info about installation process
+            AlertDialog.Builder builder = new AlertDialog.Builder(DetectorActivity.this);
+            builder.setMessage(R.string.speachError).setTitle(R.string.speachErrorTitle);
+            builder.setIcon(R.drawable.ic_language);
+            builder.setPositiveButton(R.string.speachErrorNO, (dialogInterface, i) -> android.os.Process.killProcess(android.os.Process.myPid()));
+            builder.setNegativeButton(R.string.speachErrorYES, (dialogInterface, i) -> {
+                Intent intent = new Intent();
+                intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$LanguageAndInputSettingsActivity"));
+                startActivity(intent);
+            });
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
         else
-            speedText.setVisibility(View.INVISIBLE);
+        {
+            textToSpeech.setLanguage(locale);
+            textToSpeech.speak("Miłej podróży", TextToSpeech.QUEUE_ADD, null, null);
+        }
     }
+
     private void textImgVisibility(boolean textOption)
     {
         //TEXT OPTION
@@ -537,7 +524,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                 if(speedOption)
                     checkSpeedLimit(currentSpeedFloat,detectedClass);
 
-
                 previousDetection = detectedClass;
 
                 Log.d("DetectionList", detectedClass);
@@ -548,8 +534,8 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 
     private void setTextAndImage(String detectedClass)
     {
-        getImageFromBase(detectedClass, imageView1);
         textSign1.setText(detectedClass);
+        getImageFromBase(detectedClass, imageView1);
 
         if(!previousDetection.isEmpty() && !previousDetection.equals(detectedClass))
         {
@@ -570,10 +556,10 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         if(!previousDetection.isEmpty())
         {
             if(!previousDetection.equals(detectedClass))
-                textToSpeech.speak(detectedClass, TextToSpeech.QUEUE_ADD, null);
+                textToSpeech.speak(detectedClass, TextToSpeech.QUEUE_ADD, null, null);
         }
         else
-            textToSpeech.speak(detectedClass, TextToSpeech.QUEUE_ADD, null);
+            textToSpeech.speak(detectedClass, TextToSpeech.QUEUE_ADD, null, null);
     }
 
     @Override
@@ -632,38 +618,11 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             public void onCancelled(@NonNull DatabaseError error)
             {
                 //textView.setText(error.toString());
-                Toast.makeText(DetectorActivity.this, "fire" +error.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(DetectorActivity.this, "Bład pobierania obrazu-- " +error.toString(), Toast.LENGTH_SHORT).show();
             }
         });
     }
-    private void speedService()
-    {
-        //Permisja- lokalizacja:
-        try
-        {
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED )
-            {
-                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 101);
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
 
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);  //spr czy lokalizacja jest włączona
-
-        if(isGPSEnabled)
-        {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            this.updateSpeed(null);
-        }
-        else
-        {
-            displayAlertDialog(R.string.localizationError,R.string.errorTitle,R.string.errorRestart,true); //Dialog alert
-        }
-    }
 
     public void displayAlertDialog(int message, int title, int positiveBtn, boolean isNegativeBtn)
     {
@@ -680,6 +639,51 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         dialog.show();
     }
 
+    private void speedEnabled()
+    {
+        if(speedOption)
+        {
+            speedText.setVisibility(View.VISIBLE);
+
+            /*if (ContextCompat.checkSelfPermission(DetectorActivity.this, Manifest.permission.LOCATION_HARDWARE) == PackageManager.PERMISSION_DENIED)
+            {
+                ActivityCompat.requestPermissions(DetectorActivity.this, new String[]{Manifest.permission.LOCATION_HARDWARE}, LOCATION_PERMISSION_REQUEST_CODE);
+            }
+            else*/
+
+            speedService();
+        }
+        else
+            speedText.setVisibility(View.INVISIBLE);
+    }
+    private void speedService()
+    {
+        //Permisja- lokalizacja:
+        try
+        {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED )
+            {
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            }
+        }
+        catch (Exception e)
+        {
+            //e.printStackTrace();
+        }
+
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);  //spr czy lokalizacja jest włączona
+
+        if(isGPSEnabled)
+        {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            this.updateSpeed(null);
+        }
+        else
+        {
+            displayAlertDialog(R.string.localizationError,R.string.errorTitle,R.string.errorRestart,true); //Dialog alert
+        }
+    }
     private void updateSpeed(CustomLocation location)
     {
         currentSpeedFloat = 0;
@@ -722,7 +726,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     public void adjustAudio(boolean setMute)
     {
         AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-
 
         if (setMute && audioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL) //silent mode
         {

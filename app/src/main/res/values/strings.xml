@@ -16,8 +16,9 @@
     <string name="speachErrorYES">Przejdź do ustawień</string>
     <string name="speachErrorNO">Zamknij</string>
     <string name="errorTitle">Error</string>
+    <string name="TTSError">Błąd mechanizmu Text-To-Speech</string>
     <string name="localizationError">Włącz lokalizację, aby umożliwić pomiar prędkości.</string>
-    <string name="countingModelError">Błąd przetwarzania modelu sztucznej inteligencji</string>
+    <string name="countingModelError">Błąd przetwarzania modelu sztucznej inteligencji. Spróbuj ponownie poźniej...</string>
 
     <string name="errorRestart">Restartuj aplikację</string>
     <string name="errorOk">Zamknij okno</string>

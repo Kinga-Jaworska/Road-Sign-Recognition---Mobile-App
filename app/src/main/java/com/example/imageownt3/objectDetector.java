@@ -189,9 +189,10 @@ public class objectDetector
         catch(Exception ex)
         {
             ImageRecognitionInterface.onModelError("Błąd obliczeń");
+            Log.d("recognitionError",ex.toString());
         }
-        return matImage;
 
+        return matImage;
     }
 
     private ByteBuffer convertBitmapToByteBuffer(Bitmap bitmap)

@@ -18,5 +18,9 @@
 
     <color name="greenAccentTransparent">#70275E29</color>
     <color name="greenAccentDay">#2CAA30</color>
-  <color name="alertSpeed">#FF5722</color>
+    <color name="alertSpeed">#FF5722</color>
+
+  <color name="gradientDarker">#EB111211</color>
+  <color name="gradientDark">#AB161716</color>
+  <color name="gradientTrans">#4B112511</color>
 </resources>
