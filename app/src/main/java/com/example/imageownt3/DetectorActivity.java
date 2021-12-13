@@ -665,25 +665,26 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             {
                 ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 101);
             }
+            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);  //spr czy lokalizacja jest włączona
+
+            if(isGPSEnabled)
+            {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+                this.updateSpeed(null);
+            }
+            else
+            {
+                displayAlertDialog(R.string.localizationError,R.string.errorLocalization,R.string.errorRestart,true); //Dialog alert
+            }
         }
         catch (Exception e)
         {
             //e.printStackTrace();
-        }
-
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);  //spr czy lokalizacja jest włączona
-
-        if(isGPSEnabled)
-        {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            this.updateSpeed(null);
-        }
-        else
-        {
-            displayAlertDialog(R.string.localizationError,R.string.errorTitle,R.string.errorRestart,true); //Dialog alert
+            displayAlertDialog(R.string.localizationNotGranted,R.string.errorLocalization,R.string.errorRestart,true); //Dialog alert
         }
     }
+
     private void updateSpeed(CustomLocation location)
     {
         currentSpeedFloat = 0;

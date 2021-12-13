@@ -16,7 +16,9 @@
     <string name="speachErrorYES">Przejdź do ustawień</string>
     <string name="speachErrorNO">Zamknij</string>
     <string name="errorTitle">Error</string>
+    <string name="errorLocalization">Lokalizacja</string>
     <string name="TTSError">Błąd mechanizmu Text-To-Speech</string>
+    <string name="localizationNotGranted">Nie udzielono dostępu do lokalizacji.</string>
     <string name="localizationError">Włącz lokalizację, aby umożliwić pomiar prędkości.</string>
     <string name="countingModelError">Błąd przetwarzania modelu sztucznej inteligencji. Spróbuj ponownie poźniej...</string>
 
