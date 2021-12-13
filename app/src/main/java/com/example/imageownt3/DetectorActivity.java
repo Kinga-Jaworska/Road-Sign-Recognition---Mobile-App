@@ -289,7 +289,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                 {
                     if (status == TextToSpeech.SUCCESS)
                     {
-
                         Locale locale = new Locale("pl_PL");
                         int result = textToSpeech.setLanguage(locale);
                         Log.d("OnInitListener", "Text to speech engine started successfully.");
@@ -332,7 +331,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         else
         {
             textToSpeech.setLanguage(locale);
-            textToSpeech.speak("Miłej podróży", TextToSpeech.QUEUE_ADD, null, null);
+            //textToSpeech.speak("Miłej podróży", TextToSpeech.QUEUE_ADD, null, null);
         }
     }
 
@@ -644,13 +643,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         if(speedOption)
         {
             speedText.setVisibility(View.VISIBLE);
-
-            /*if (ContextCompat.checkSelfPermission(DetectorActivity.this, Manifest.permission.LOCATION_HARDWARE) == PackageManager.PERMISSION_DENIED)
-            {
-                ActivityCompat.requestPermissions(DetectorActivity.this, new String[]{Manifest.permission.LOCATION_HARDWARE}, LOCATION_PERMISSION_REQUEST_CODE);
-            }
-            else*/
-
             speedService();
         }
         else
@@ -683,8 +675,9 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             //e.printStackTrace();
             displayAlertDialog(R.string.localizationNotGranted,R.string.errorLocalization,R.string.errorRestart,true); //Dialog alert
         }
-    }
 
+
+    }
     private void updateSpeed(CustomLocation location)
     {
         currentSpeedFloat = 0;
