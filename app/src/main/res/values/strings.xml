@@ -20,7 +20,7 @@
     <string name="TTSError">Błąd mechanizmu Text-To-Speech</string>
     <string name="localizationNotGranted">Nie udzielono dostępu do lokalizacji.</string>
     <string name="localizationError">Włącz lokalizację, aby umożliwić pomiar prędkości.</string>
-    <string name="countingModelError">Błąd przetwarzania modelu sztucznej inteligencji. Spróbuj ponownie poźniej...</string>
+    <string name="countingModelError">Błąd przetwarzania modelu sztucznej inteligencji.</string>
 
     <string name="errorRestart">Restartuj aplikację</string>
     <string name="errorOk">Zamknij okno</string>
@@ -47,5 +47,6 @@
 
     <string name="silentModeTitle">Informacja</string>
     <string name="silentModeInf">Urządzenie jest już w trybie wyciszenia</string>
+    <string name="selectingOptionToast">Wybierz przynajmniej jedną z pierwszych trzech opcji</string>
 
 </resources>

@@ -3,6 +3,7 @@ package com.example.imageownt3;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -29,78 +30,53 @@ import java.util.TreeMap;
 
 public class objectDetector
 {
-    private Interpreter interpreter; //load and predict model
-    private ArrayList<String> labelList = new ArrayList<>();
-    private int INPUT_SIZE;
-//    private int PIXEL_SIZE = 3 ; //RGB
-//    private int IMAGE_MEAN=0;
-    private float IMAGE_STD=127.5f;
-    private ImageRecognitionInterface ImageRecognitionInterface;
+    private Interpreter interpreter;
+    private ArrayList<String> labelList;
+    final private int INPUT_SIZE;
+    private final ImageRecognitionInterface ImageRecognitionInterface;
     private static final int[] OUTPUT_TINY = new int[]{2535, 2535};
-    //    private GpuDelegate gpuDelegate;
-    //    private Delegate delegate;
     int height =0 ;
     int width = 0;
     Context context;
-    GpuDelegate gpuDelegate;
+    boolean quant;
+    //GpuDelegate gpuDelegate;
 
-    objectDetector(ArrayList<String> arrayList, Context context, int inputSize, ImageRecognitionInterface ImageRecognitionInterface) throws IOException
+
+    objectDetector(ArrayList<String> arrayList, Context context, int inputSize, boolean quant, ImageRecognitionInterface ImageRecognitionInterface)
     {
         this.ImageRecognitionInterface = ImageRecognitionInterface;
         this.context = context;
         this.labelList = arrayList;
+        this.INPUT_SIZE = inputSize;
+        this.quant = quant;
+
         Log.d("sizeListobjectDetector",String.valueOf(labelList.size()));
 
-        INPUT_SIZE = inputSize;
-
-        //define gpu/cpu
-        Interpreter.Options options = new Interpreter.Options();
-
-        //gpuDelegate = new GpuDelegate();
-
-        // Initialize interpreter with GPU delegate
-
-        //CompatibilityList compatList = new CompatibilityList();
-
-        //GPU - check if exists and set options
-
-
-        //gpuDelegate = new GpuDelegate();
-       // options.addDelegate(gpuDelegate);
-
-        options.setNumThreads(4);
-        //ImageRecognitionInterface.gpuDelegate("Gpu");
-
-
-//        if(compatList.isDelegateSupportedOnThisDevice())
-//        {
-//            // if the device has a supported GPU, add the GPU delegate
-//            //GpuDelegate.Options delegateOptions = compatList.getBestOptionsForThisDevice();
-//            gpuDelegate = new GpuDelegate();
-//            options.addDelegate(gpuDelegate);
-//            options.setNumThreads(4);
-//            ImageRecognitionInterface.gpuDelegate("Gpu");
-//
-//        } else {
-//            // if the GPU is not supported, run on 4 threads
-//            options.setNumThreads(4);
-//            ImageRecognitionInterface.gpuDelegate("NO Gpu");
-//            //ImageRecognitionInterface.onModelError("not supported Gpu");
-//        }
-        //options.addDelegate(gpuDelegate);
-        //options.setNumThreads(4);  //depending on phone
-        LoadModel(options);
+        try
+        {
+            Interpreter.Options options = new Interpreter.Options();
+            //GPU
+            //gpuDelegate = new GpuDelegate();
+            //options.addDelegate(gpuDelegate);
+            options.setNumThreads(4);
+            LoadModel(options);
+            Log.d("objectDetector", "Successfully loaded model");
+        }
+        catch (Exception ex)
+        {
+            ImageRecognitionInterface.onModelError("Błąd interpretera");
+            Log.d("objectDetector", ex.toString());
+        }
     }
 
     public void LoadModel(Interpreter.Options options)
     {
-        //LOAD MODEL from FireBase
         CustomModelDownloadConditions conditions = new CustomModelDownloadConditions.Builder()
-                .requireWifi()  // Also possible: .requireCharging() and .requireDeviceIdle()
                 .build();
         FirebaseModelDownloader.getInstance()
                 .getModel("signModel", DownloadType.LOCAL_MODEL_UPDATE_IN_BACKGROUND, conditions)
-                .addOnSuccessListener(new OnSuccessListener<CustomModel>() {
+                .addOnSuccessListener(new OnSuccessListener<CustomModel>()
+                {
                     @Override
                     public void onSuccess(CustomModel model)
                     {
@@ -108,18 +84,20 @@ public class objectDetector
                         if (modelFile != null)
                         {
                             interpreter = new Interpreter(modelFile,options);
+                            ImageRecognitionInterface.onReadyInterpreter(true);
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e)
             {
-                ImageRecognitionInterface.onLoadModelError(e.toString()); //błąd wczytywania modelu AI
+                ImageRecognitionInterface.onLoadModelError(e.toString());
+                ImageRecognitionInterface.onReadyInterpreter(false);
             }
         });
     }
 
-    public Mat recognizeImage(Mat matImage)
+    public void recognizeImage(Mat matImage)
     {
         try
         {
@@ -127,9 +105,7 @@ public class objectDetector
             Mat rotatedMatImage = new Mat();
             Core.flip(matImage.t(), rotatedMatImage, 1);
 
-
             //convert to Bitmap
-            //bitmap = null;
             Bitmap bitmap = Bitmap.createBitmap(rotatedMatImage.cols(), rotatedMatImage.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(rotatedMatImage, bitmap);
 
@@ -152,10 +128,10 @@ public class objectDetector
             outputMap.put(0, new float[1][OUTPUT_TINY[0]][4]);
             outputMap.put(1, new float[1][OUTPUT_TINY[1]][labelList.size()]); //labels.size()
 
+
             interpreter.runForMultipleInputsOutputs(input, outputMap);
 
             int gridWidth = OUTPUT_TINY[0];
-            //float[][][] bboxes = (float[][][]) outputMap.get(0);
             float[][][] out_score = (float[][][]) outputMap.get(1);
 
             for (int i = 0; i < gridWidth; i++)
@@ -180,7 +156,6 @@ public class objectDetector
                 if (score > 0.85)
                 {
                     ImageRecognitionInterface.onRecognition(String.valueOf(labelList.get(detectedClass)));
-                    //ImageRecognitionInterface.onRecognitionTimer(String.valueOf(labelList.get(detectedClass)));
                 }
             }
             //-90°
@@ -192,23 +167,18 @@ public class objectDetector
             Log.d("recognitionError",ex.toString());
         }
 
-        return matImage;
     }
 
     private ByteBuffer convertBitmapToByteBuffer(Bitmap bitmap)
     {
         ByteBuffer byteBuffer;
-        boolean quant = false;
         int sizeImages = INPUT_SIZE;
+        float IMAGE_STD=255.0f;
 
         if(quant)
-        {
             byteBuffer = ByteBuffer.allocateDirect(sizeImages * sizeImages * 3);
-        }
-        else //false
-        {
+        else
             byteBuffer = ByteBuffer.allocateDirect(sizeImages * sizeImages * 3 * 4);
-        }
 
         byteBuffer.order(ByteOrder.nativeOrder());
         int [] intValues = new int[sizeImages*sizeImages];
@@ -235,7 +205,6 @@ public class objectDetector
                 }
             }
         }
-
         return byteBuffer;
     }
 
@@ -244,8 +213,7 @@ public class objectDetector
         void onRecognition(String detectedClass);
         void onLoadModelError(String modelError);
         void onModelError(String modelError);
-        // void gpuDelegate(String gpuInfo);
-        void onRecognitionTimer(String valueOf);
+        void onReadyInterpreter(Boolean isReady);
     }
 
 }

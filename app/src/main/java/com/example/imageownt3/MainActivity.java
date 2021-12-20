@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity
     boolean connected;
     private SwitchCompat speechSwitch, textImgSwitch, vibSwitch, speedSwitch, silenceSwitch;
     private static final int  MY_PERMISSIONS_REQUEST_CAMERA = 0;
-
     private static boolean openCvFlag;
 
     static
@@ -82,36 +81,36 @@ public class MainActivity extends AppCompatActivity
 
         internetState(internetInfo);
 
+
         //TEST
         btnCamera.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                //if(connected)
-               // {
                     boolean isTextChecked = textImgSwitch.isChecked();
                     boolean isSpeechChecked = speechSwitch.isChecked();
                     boolean isVibChecked = vibSwitch.isChecked();
                     boolean isSpeedChecked = speedSwitch.isChecked();
                     boolean isSilenceChecked = silenceSwitch.isChecked();
 
-                    Intent intent = new Intent(MainActivity.this, DetectorActivity.class);
-                    //intent.putExtra("imgOption",isImgChecked);
-                    intent.putExtra("textImgOption",isTextChecked);
-                    intent.putExtra("speechOption",isSpeechChecked);
-                    intent.putExtra("vibrationOption", isVibChecked);
-                    intent.putExtra("speedOption", isSpeedChecked);
-                    intent.putExtra("silenceOption", isSilenceChecked);
-                    //intent.putExtra("mapOption", isMapChecked);
-                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP));
-               // }
-                //else
-                  //  Toast.makeText(MainActivity.this, "Brak połączenia z Internetem", Toast.LENGTH_SHORT).show();
+                    if(!isTextChecked && !isSpeechChecked && !isVibChecked)
+                    {
+                        Toast.makeText(MainActivity.this,R.string.selectingOptionToast, Toast.LENGTH_SHORT).show();
+                    }
+                    else
+                    {
+                        Intent intent = new Intent(MainActivity.this, DetectorActivity.class);
+                        intent.putExtra("textImgOption",isTextChecked);
+                        intent.putExtra("speechOption",isSpeechChecked);
+                        intent.putExtra("vibrationOption", isVibChecked);
+                        intent.putExtra("speedOption", isSpeedChecked);
+                        intent.putExtra("silenceOption", isSilenceChecked);
+
+                        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                    }
             }
         });
-
-
     }
 
     private void internetState(ImageView internetInfo)
@@ -133,14 +132,10 @@ public class MainActivity extends AppCompatActivity
                     internetInfo.setVisibility(View.INVISIBLE);
             }
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
+            public void onCancelled(@NonNull DatabaseError error)
+            {
                 System.err.println("Listener was cancelled");
             }
         });
-    }
-
-    protected void onResume()
-    {
-        super.onResume();
     }
 }
