@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -35,20 +36,16 @@ public class objectDetector
     final private int INPUT_SIZE;
     private final ImageRecognitionInterface ImageRecognitionInterface;
     private static final int[] OUTPUT_TINY = new int[]{2535, 2535};
-    int height =0 ;
-    int width = 0;
     Context context;
-    boolean quant;
-    //GpuDelegate gpuDelegate;
+    GpuDelegate gpuDelegate;
 
-
-    objectDetector(ArrayList<String> arrayList, Context context, int inputSize, boolean quant, ImageRecognitionInterface ImageRecognitionInterface)
+    objectDetector(ArrayList<String> arrayList, Context context, int inputSize, ImageRecognitionInterface ImageRecognitionInterface)
     {
         this.ImageRecognitionInterface = ImageRecognitionInterface;
         this.context = context;
         this.labelList = arrayList;
         this.INPUT_SIZE = inputSize;
-        this.quant = quant;
+
 
         Log.d("sizeListobjectDetector",String.valueOf(labelList.size()));
 
@@ -56,8 +53,8 @@ public class objectDetector
         {
             Interpreter.Options options = new Interpreter.Options();
             //GPU
-            //gpuDelegate = new GpuDelegate();
-            //options.addDelegate(gpuDelegate);
+            gpuDelegate = new GpuDelegate();
+            options.addDelegate(gpuDelegate);
             options.setNumThreads(4);
             LoadModel(options);
             Log.d("objectDetector", "Successfully loaded model");
@@ -97,7 +94,7 @@ public class objectDetector
         });
     }
 
-    public void recognizeImage(Mat matImage)
+    public void recognizeSign(Mat matImage)
     {
         try
         {
@@ -109,30 +106,24 @@ public class objectDetector
             Bitmap bitmap = Bitmap.createBitmap(rotatedMatImage.cols(), rotatedMatImage.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(rotatedMatImage, bitmap);
 
-            //define
-            height = bitmap.getHeight();
-            width = bitmap.getWidth();
-
             //scale
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
             ByteBuffer byteBuffer = convertBitmapToByteBuffer(scaledBitmap);
 
             Object[] input = new Object[1];
-
             input[0] = byteBuffer;
 
-            Map<Integer, Object> outputMap = new TreeMap<>();
+            Map<Integer, Object> outputMap = new HashMap<>();
 
             Log.d("sizeList2",String.valueOf(labelList.size()));
 
             outputMap.put(0, new float[1][OUTPUT_TINY[0]][4]);
             outputMap.put(1, new float[1][OUTPUT_TINY[1]][labelList.size()]); //labels.size()
 
-
             interpreter.runForMultipleInputsOutputs(input, outputMap);
 
             int gridWidth = OUTPUT_TINY[0];
-            float[][][] out_score = (float[][][]) outputMap.get(1);
+            float[][][] output = (float[][][]) outputMap.get(1);
 
             for (int i = 0; i < gridWidth; i++)
             {
@@ -140,71 +131,56 @@ public class objectDetector
                 int detectedClass = -1;
                 final float[] classes = new float[labelList.size()];
 
-                for (int c = 0; c < labelList.size(); c++)
-                {
-                    classes[c] = out_score[0][i][c];
-                }
+                assert output != null; //?
+                System.arraycopy(output[0][i], 0, classes, 0, labelList.size());
+
                 for (int c = 0; c < labelList.size(); ++c)
                 {
-                    if (classes[c] > maxClass) {
+                    if (classes[c] > maxClass)
+                    {
                         detectedClass = c;
                         maxClass = classes[c];
                     }
                 }
 
                 final float score = maxClass;
-                if (score > 0.85)
+                if (score >= 0.9)
                 {
                     ImageRecognitionInterface.onRecognition(String.valueOf(labelList.get(detectedClass)));
                 }
             }
-            //-90°
-            Core.flip(rotatedMatImage.t(),matImage,0);
         }
         catch(Exception ex)
         {
             ImageRecognitionInterface.onModelError("Błąd obliczeń");
             Log.d("recognitionError",ex.toString());
         }
-
     }
 
     private ByteBuffer convertBitmapToByteBuffer(Bitmap bitmap)
     {
         ByteBuffer byteBuffer;
-        int sizeImages = INPUT_SIZE;
-        float IMAGE_STD=255.0f;
 
-        if(quant)
-            byteBuffer = ByteBuffer.allocateDirect(sizeImages * sizeImages * 3);
-        else
-            byteBuffer = ByteBuffer.allocateDirect(sizeImages * sizeImages * 3 * 4);
-
+        byteBuffer = ByteBuffer.allocateDirect(INPUT_SIZE * INPUT_SIZE * 3 * 4);
         byteBuffer.order(ByteOrder.nativeOrder());
-        int [] intValues = new int[sizeImages*sizeImages];
+
+        int [] intValues = new int[INPUT_SIZE*INPUT_SIZE];
         bitmap.getPixels(intValues,0,bitmap.getWidth(),0,0,bitmap.getWidth(), bitmap.getHeight());
 
         int pixel = 0;
 
-        for(int i=0; i<sizeImages; ++i)
+        for(int i=0; i<INPUT_SIZE; ++i)
         {
-            for (int j=0;j<sizeImages; ++j)
+            for (int j=0;j<INPUT_SIZE; ++j)
             {
                 final int val =  intValues[pixel++];
-                if(quant)
-                {
-                    byteBuffer.put((byte) ((val>>16)&0xFF));
-                    byteBuffer.put((byte) ((val>>8)&0xFF));
-                    byteBuffer.put((byte) (val&0xFF));
-                }
-                else
-                {
-                    byteBuffer.putFloat((((val>>16) & 0xFF))/IMAGE_STD);
-                    byteBuffer.putFloat((((val>>8) & 0xFF))/IMAGE_STD);
-                    byteBuffer.putFloat((((val)&0xFF))/IMAGE_STD);
-                }
+
+                byteBuffer.putFloat((((val>>16) & 0xFF))/255.0f);
+                byteBuffer.putFloat((((val>>8) & 0xFF))/255.0f);
+                byteBuffer.putFloat((((val)&0xFF))/255.0f);
             }
         }
+
         return byteBuffer;
     }
 

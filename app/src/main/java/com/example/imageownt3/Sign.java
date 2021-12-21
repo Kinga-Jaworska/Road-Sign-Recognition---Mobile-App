@@ -1,31 +1,28 @@
 package com.example.imageownt3;
 
-public class Image
+public class Sign
 {
     private String name;
     private String link;
-
+    private String type;
     public String getName() {
         return name;
     }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getLink() {
         return link;
     }
-
-    public void setLink(String link) {
-        this.link = link;
+    public String getType() {
+        return type;
     }
 
-    public Image(String name, String link) {
+    public Sign(String name, String link, String type)
+    {
         this.name = name;
         this.link = link;
+        this.type = type;
     }
 
-    public Image() {
+    public Sign()
+    {
     }
 }

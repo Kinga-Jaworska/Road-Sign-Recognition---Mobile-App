@@ -1,7 +1,6 @@
 package com.example.imageownt3;
 
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -83,7 +82,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     //Detector, Base, TTS, vib
     private String TAG = "DetectorActivity";
     private objectDetector objectDetector;
-    private DatabaseReference imageReference;
+    private DatabaseReference signReference;
     String previousDetection = "", detectedClass = "";
     FirebaseDatabase database;
     private TextToSpeech textToSpeech;
@@ -116,7 +115,8 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     };
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -147,7 +147,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         openCvCamera = findViewById(R.id.cameraFrames);
 
         database = FirebaseDatabase.getInstance();
-        imageReference = database.getReference("data").child("images");
+        signReference = database.getReference("data").child("images");
 
         //SET OPTIONS
         speedEnabled();
@@ -180,7 +180,8 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         });
     }
 
-    private void timerBuffer() {
+    private void timerBuffer()
+    {
         timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -199,7 +200,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     }
 
     private void CreateObjectDetector() {
-        objectDetector = new objectDetector(labelList, getApplicationContext(), INPUT_SIZE, false, this);
+        objectDetector = new objectDetector(labelList, getApplicationContext(), INPUT_SIZE, this);
     }
 
     private void speechEnable(boolean speechOption) {
@@ -393,7 +394,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         mGray = inputFrame.gray();
 
         if(isDetectorReady)
-            objectDetector.recognizeImage(mRgba);
+            objectDetector.recognizeSign(mRgba);
 
         return mRgba;
     }
@@ -442,7 +443,35 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     {
         if(detectedClass.toLowerCase().contains("zakaz"))
         {
-            vib.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+            vib.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
+        else
+        {
+            signReference.addValueEventListener(new ValueEventListener()
+            {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot)
+                {
+                    //imageArrayList.clear();
+                    for (DataSnapshot ds : snapshot.getChildren())
+                    {
+                        Sign img = ds.getValue(Sign.class);
+                        if(img!=null)
+                        {
+                            if((img.getName().equalsIgnoreCase(detectedClass)) && img.getType()!=null)
+                            {
+                                if(img.getType().equals("zakaz"))
+                                    vib.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+                            }
+                        }
+                    }
+                }
+                @Override
+                public void onCancelled(@NonNull DatabaseError error)
+                {
+                    Toast.makeText(DetectorActivity.this, "Bład pobierania pobierania typu znaku" +error.toString(), Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 
@@ -492,12 +521,12 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     {
         //get Product from base
         FirebaseDatabase database = FirebaseDatabase.getInstance(); //as Global ?
-        imageReference = database.getReference("data").child("images");
+        signReference = database.getReference("data").child("images");
         if(detectionLabel.isEmpty())
             imgView.setImageResource(android.R.color.transparent);
         else
         {
-            imageReference.addValueEventListener(new ValueEventListener()
+            signReference.addValueEventListener(new ValueEventListener()
             {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot)
@@ -505,7 +534,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                     //imageArrayList.clear();
                     for (DataSnapshot ds : snapshot.getChildren())
                     {
-                        Image img = ds.getValue(Image.class);
+                        Sign img = ds.getValue(Sign.class);
                         if(img!=null)
                         {
                             if((img.getName().toLowerCase().equals(detectionLabel.toLowerCase())))
@@ -527,8 +556,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         }
 
     }
-
-
     public void displayAlertDialog(int message, int title, int positiveBtn, boolean isNegativeBtn)
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.CustomAlertDialog);
