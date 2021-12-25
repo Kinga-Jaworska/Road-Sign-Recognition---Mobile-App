@@ -441,14 +441,9 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             getImageFromBase(previousDetection, imageView2);
         }
     }
+
     private void setVibration()
     {
-        if(detectedClass.toLowerCase().contains("zakaz"))
-        {
-            vib.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE));
-        }
-        else
-        {
             signReference.addValueEventListener(new ValueEventListener()
             {
                 @Override
@@ -474,7 +469,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                     Toast.makeText(DetectorActivity.this, "Bład pobierania pobierania typu znaku" +error.toString(), Toast.LENGTH_SHORT).show();
                 }
             });
-        }
     }
 
     private void speakOnRecognition()
