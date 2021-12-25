@@ -74,7 +74,8 @@
             android:textSize="24sp"
             app:layout_constraintBottom_toTopOf="@+id/speedText"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/imgView2" />
+            app:layout_constraintStart_toStartOf="@+id/imgView2"
+            app:layout_constraintTop_toTopOf="@+id/guideline10" />
 
         <ImageView
             android:id="@+id/imgView"
@@ -106,7 +107,7 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:scaleType="fitCenter"
-            app:layout_constraintBottom_toTopOf="@+id/textView2"
+            app:layout_constraintBottom_toTopOf="@+id/guideline10"
             app:layout_constraintEnd_toEndOf="@+id/imgView"
             app:layout_constraintStart_toStartOf="@+id/imgView"
             app:layout_constraintTop_toTopOf="@+id/guideline6" />
@@ -123,14 +124,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_begin="433dp" />
+            app:layout_constraintGuide_begin="385dp" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideline9"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_begin="238dp" />
+            app:layout_constraintGuide_begin="259dp" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideline10"
