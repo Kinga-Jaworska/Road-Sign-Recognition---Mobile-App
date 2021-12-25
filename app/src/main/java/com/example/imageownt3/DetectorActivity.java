@@ -171,7 +171,9 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                     backgroundLayout.setBackgroundColor(ContextCompat.getColor(DetectorActivity.this, R.color.transparent));
                     cameraOption.setText(R.string.cameraMode2);
                     flag = true;
-                } else {
+                }
+                else
+                {
                     backgroundLayout.setBackgroundResource(R.drawable.background_gradient);
                     cameraOption.setText(R.string.cameraMode1);
                     flag = false;
@@ -590,19 +592,21 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             {
                 ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 101);
             }
+
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
             isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);  //spr czy lokalizacja jest włączona
-            gnssSatatus = new GnssStatus.Callback()
-            {
-                @Override
-                public void onSatelliteStatusChanged(@NonNull GnssStatus status)
-                {
-                    super.onSatelliteStatusChanged(status);
-                }
-            };
 
             if(isGPSEnabled)
             {
+                gnssSatatus = new GnssStatus.Callback()
+                {
+                    @Override
+                    public void onSatelliteStatusChanged(@NonNull GnssStatus status)
+                    {
+                        super.onSatelliteStatusChanged(status);
+                    }
+                };
+
                 locationManager.registerGnssStatusCallback(gnssSatatus);
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
                 this.updateSpeed(null);
@@ -617,9 +621,8 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             //e.printStackTrace();
             displayAlertDialog(R.string.localizationNotGranted,R.string.errorLocalization,R.string.errorRestart,true); //Dialog alert
         }
-
-
     }
+
     private void updateSpeed(CustomLocation location)
     {
         currentSpeedFloat = 0;
