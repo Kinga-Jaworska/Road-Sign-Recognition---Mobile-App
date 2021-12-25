@@ -444,31 +444,31 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 
     private void setVibration()
     {
-            signReference.addValueEventListener(new ValueEventListener()
+        signReference.addValueEventListener(new ValueEventListener()
+        {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot)
             {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot)
-                {
                     //imageArrayList.clear();
-                    for (DataSnapshot ds : snapshot.getChildren())
+                for (DataSnapshot ds : snapshot.getChildren())
+                {
+                    Sign img = ds.getValue(Sign.class);
+                    if(img!=null)
                     {
-                        Sign img = ds.getValue(Sign.class);
-                        if(img!=null)
+                        if((img.getName().equalsIgnoreCase(detectedClass)) && img.getType()!=null)
                         {
-                            if((img.getName().equalsIgnoreCase(detectedClass)) && img.getType()!=null)
-                            {
                                 if(img.getType().equals("zakaz"))
                                     vib.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
-                            }
                         }
                     }
                 }
-                @Override
-                public void onCancelled(@NonNull DatabaseError error)
-                {
-                    Toast.makeText(DetectorActivity.this, "Bład pobierania pobierania typu znaku" +error.toString(), Toast.LENGTH_SHORT).show();
-                }
-            });
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error)
+            {
+                Toast.makeText(DetectorActivity.this, "Bład pobierania pobierania typu znaku" +error.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void speakOnRecognition()
