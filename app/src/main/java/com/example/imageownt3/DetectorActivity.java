@@ -31,14 +31,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -82,9 +79,9 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     //Detector, Base, TTS, vib
     private String TAG = "DetectorActivity";
     private objectDetector objectDetector;
-    private DatabaseReference signReference;
-    String previousDetection = "", detectedClass = "";
     FirebaseDatabase database;
+    DatabaseReference signReference;
+    String previousDetection = "", detectedClass = "";
     private TextToSpeech textToSpeech;
     ArrayList<String> labelList = new ArrayList<>();
     Boolean isDetectorReady = false;
@@ -96,7 +93,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     float currentSpeedFloat;
     Boolean isGPSEnabled = false;
 
-    final private BaseLoaderCallback openCvLoaderCallback = new BaseLoaderCallback(this) //final
+    final private BaseLoaderCallback openCvLoaderCallback = new BaseLoaderCallback(this)
     {
         @Override
         public void onManagerConnected(int status) {
@@ -147,37 +144,35 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         openCvCamera = findViewById(R.id.cameraFrames);
 
         database = FirebaseDatabase.getInstance();
-        signReference = database.getReference("data").child("images");
+
 
         //SET OPTIONS
         speedEnabled();
         textImgVisibility(textImgOption);
         speechEnable(speechOption);
 
-        //Service
+
         if (vibrationOption)
             vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
-        labelList = getLabels(); //get labels from storage
-        CreateObjectDetector();
+        labelList = getLabels();
+        objectDetector = new objectDetector(labelList, getApplicationContext(), INPUT_SIZE, this);
+        this.onSuccessInterpreter(isDetectorReady);
 
         timerBuffer();
 
         //Camera mode- camera background
-        cameraOption.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!flag) {
-                    backgroundLayout.setBackgroundColor(ContextCompat.getColor(DetectorActivity.this, R.color.transparent));
-                    cameraOption.setText(R.string.cameraMode2);
-                    flag = true;
-                }
-                else
-                {
-                    backgroundLayout.setBackgroundResource(R.drawable.background_gradient);
-                    cameraOption.setText(R.string.cameraMode1);
-                    flag = false;
-                }
+        cameraOption.setOnClickListener(v -> {
+            if (!flag) {
+                backgroundLayout.setBackgroundColor(ContextCompat.getColor(DetectorActivity.this, R.color.transparent));
+                cameraOption.setText(R.string.cameraMode2);
+                flag = true;
+            }
+            else
+            {
+                backgroundLayout.setBackgroundResource(R.drawable.background_gradient);
+                cameraOption.setText(R.string.cameraMode1);
+                flag = false;
             }
         });
     }
@@ -185,53 +180,53 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     private void timerBuffer()
     {
         timer = new Timer();
-        timer.schedule(new TimerTask() {
+        timer.schedule(new TimerTask()
+        {
             @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-
-                        previousDetection = detectedClass;
-                        detectedClass = "";
-                        onRecognition(detectedClass);
-                    }
-                });
+            public void run()
+            {
+                previousDetection = detectedClass;
+                detectedClass = "";
+                onRecognition(detectedClass);
             }
         }, 0, 10000);
     }
 
-    private void CreateObjectDetector() {
-        objectDetector = new objectDetector(labelList, getApplicationContext(), INPUT_SIZE, this);
-    }
-
-    private void speechEnable(boolean speechOption) {
-        if (speechOption) {
-            try {
+    private void speechEnable(boolean speechOption)
+    {
+        if (speechOption)
+        {
+            try
+            {
                 textToSpeech = new TextToSpeech(DetectorActivity.this, status ->
                 {
-                    if (status == TextToSpeech.SUCCESS) {
+                    if (status == TextToSpeech.SUCCESS)
+                    {
                         Locale locale = new Locale("pl_PL");
                         int result = textToSpeech.setLanguage(locale);
                         Log.d("OnInitListener", "Text to speech engine started successfully.");
                         checkTTSLanguage(result, locale);
-                    } else {
+                    }
+                    else
+                    {
                         displayAlertDialog(R.string.TTSError, R.string.errorTitle, R.string.errorRestart, true);
                     }
                 });
-            } catch (Exception exception) {
+            } catch (Exception exception)
+            {
                 Toast.makeText(this, "error " + exception.toString(), Toast.LENGTH_SHORT).show();
                 Log.d("speechError", exception.toString());
             }
         }
     }
 
-    private void checkTTSLanguage(int result, Locale locale) {
-        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+    private void checkTTSLanguage(int result, Locale locale)
+    {
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED)
+        {
             Log.e("speechError", "This Language is not supported");
 
-            //Info about installation process
-            AlertDialog.Builder builder = new AlertDialog.Builder(DetectorActivity.this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this,R.style.CustomAlertDialog);
             builder.setMessage(R.string.speachError).setTitle(R.string.speachErrorTitle);
             builder.setIcon(R.drawable.ic_language);
             builder.setPositiveButton(R.string.speachErrorNO, (dialogInterface, i) -> android.os.Process.killProcess(android.os.Process.myPid()));
@@ -243,10 +238,10 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 
             AlertDialog dialog = builder.create();
             dialog.show();
-        } else {
+        }
+        else
+        {
             textToSpeech.setLanguage(locale);
-            String welcomeText = "Miłej podróży";
-            textToSpeech.speak(welcomeText, TextToSpeech.QUEUE_ADD, null, null);
         }
     }
 
@@ -267,67 +262,51 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         }
     }
 
-    public ArrayList<String> getLabels() {
-        //load labelmap:
+    public ArrayList<String> getLabels()
+    {
         StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("labels.txt");
+        try
+        {
+            File finalLocalFile = File.createTempFile("labels", "txt");
+            storageReference.getFile(finalLocalFile).addOnSuccessListener(taskSnapshot -> {
+                try
+                {
+                    FileReader fileReader = new FileReader(finalLocalFile.getPath());
+                    BufferedReader bufferedReader = new BufferedReader(fileReader);
+                    String buffer;
 
-        try {
-            File localFile = File.createTempFile("labels", "txt");
-            File finalLocalFile = localFile;
-            storageReference.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                    while ((buffer = bufferedReader.readLine()) != null)
+                        labelList.add(buffer);
 
-                    Log.d("sizeListstorage", "skopiowano plik " + finalLocalFile.getPath());
+                    openCvCamera.setVisibility(SurfaceView.VISIBLE);
+                    openCvCamera.setCvCameraViewListener(DetectorActivity.this);
 
-                    FileReader fileReader = null;
-                    try {
-                        String path = finalLocalFile.getPath();
-                        fileReader = new FileReader(path);
-
-                        BufferedReader bufferedReader = new BufferedReader(fileReader);
-                        String buffer;
-                        StringBuilder stringBuilder = new StringBuilder();
-
-                        while ((buffer = bufferedReader.readLine()) != null) {
-                            stringBuilder.append(buffer);
-                            labelList.add(buffer);
-                        }
-
-                        Log.d("sizeListActivity", String.valueOf(labelList.size()));
-
-                        //after getting data -> turn on camera
-                        openCvCamera.setVisibility(SurfaceView.VISIBLE);
-                        openCvCamera.setCvCameraViewListener(DetectorActivity.this);
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    // Handle any errors
-                    Log.d("storage", "Error " + exception.toString());
-                    onLoadModelError("Błąd pliku");
-                }
+            }).addOnFailureListener(exception ->
+            {
+                Log.d("storage", "Error " + exception.toString());
+                this.onLoadModelError("Błąd pliku z etykietami");
             });
-        } catch (IOException e) {
+        }
+        catch (IOException e){
             e.printStackTrace();
         }
-
         return labelList;
     }
 
     @Override
-    protected void onResume() {
+    protected void onResume()
+    {
         super.onResume();
-        if (OpenCVLoader.initDebug()) {
-            //if load success
+        if (OpenCVLoader.initDebug())
+        {
             Log.d(TAG, "Opencv initialization is done");
             openCvLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        } else {
-            //if not loaded
+        }
+        else
+        {
             Log.d(TAG, "Opencv is not loaded. try again");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, openCvLoaderCallback);
         }
@@ -335,10 +314,12 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     }
 
     @Override
-    protected void onPause() {
+    protected void onPause()
+    {
         adjustAudio(false);
         timer.cancel();
-        if (textToSpeech != null) {
+        if (textToSpeech != null)
+        {
             textToSpeech.stop();
             textToSpeech.shutdown();
         }
@@ -404,29 +385,24 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     @Override
     public void onRecognition(String currentDetectedClass)
     {
-        runOnUiThread(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                detectedClass = currentDetectedClass;
+        runOnUiThread(() -> {
+            detectedClass = currentDetectedClass;
 
-                if (textImgOption)
-                    setTextAndImage();
+            if (textImgOption)
+                setTextAndImage();
 
-                if (speechOption)
-                    speakOnRecognition();
+            if (speechOption)
+                speakOnRecognition();
 
-                if(vibrationOption)
-                    setVibration();
+            if(vibrationOption)
+                setVibration();
 
-                if(speedOption)
-                    checkSpeedLimit(currentSpeedFloat);
+            if(speedOption)
+                checkSpeedLimit(currentSpeedFloat);
 
-                previousDetection = detectedClass;
+            previousDetection = detectedClass;
 
-                Log.d("DetectionList", detectedClass);
-            }
+            Log.d("DetectionList", detectedClass);
         });
     }
 
@@ -444,20 +420,20 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 
     private void setVibration()
     {
+        signReference = database.getReference("data").child("sign");
         signReference.addValueEventListener(new ValueEventListener()
         {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot)
             {
-                    //imageArrayList.clear();
                 for (DataSnapshot ds : snapshot.getChildren())
                 {
-                    Sign img = ds.getValue(Sign.class);
-                    if(img!=null)
+                    Sign sign = ds.getValue(Sign.class);
+                    if(sign!=null)
                     {
-                        if((img.getName().equalsIgnoreCase(detectedClass)) && img.getType()!=null)
+                        if((sign.getName().equalsIgnoreCase(detectedClass)) && sign.getType()!=null)
                         {
-                                if(img.getType().equals("zakaz"))
+                                if(sign.getType().equals("zakaz"))
                                     vib.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
                         }
                     }
@@ -479,7 +455,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                 textToSpeech.speak(detectedClass, TextToSpeech.QUEUE_ADD, null, null);
         }
         else
-            textToSpeech.speak(detectedClass, TextToSpeech.QUEUE_FLUSH, null, null);
+            textToSpeech.speak(detectedClass, TextToSpeech.QUEUE_ADD, null, null);
     }
 
     @Override
@@ -487,7 +463,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     {
         Log.d("modelError",errorM);
         modelError = true;
-        displayAlertDialog(R.string.modelError,R.string.errorTitle,R.string.errorRestart,true); //Dialog alert
+        displayAlertDialog(R.string.modelError,R.string.errorTitle,R.string.errorRestart,false);
     }
 
     @Override
@@ -495,47 +471,44 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     {
         Log.d("modelError",errorM);
         modelError = true;
-        runOnUiThread(new Runnable()
-        {
-            public void run()
-            {
-                displayAlertDialog(R.string.countingModelError,R.string.errorTitle,R.string.errorRestart,false); //Dialog alert
-            }
+        runOnUiThread(() -> {
+            displayAlertDialog(R.string.countingModelError,R.string.errorTitle,R.string.errorRestart,false);
         });
-        openCvCamera.disableView();
-        openCvCamera.setVisibility(SurfaceView.INVISIBLE);
+
+       openCvCamera.disableView();
+       openCvCamera.setVisibility(SurfaceView.INVISIBLE);
     }
 
     @Override
-    public void onReadyInterpreter(Boolean isReady)
+    public void onSuccessInterpreter(Boolean isReady)
     {
-        Toast.makeText(getApplicationContext(), "Detektor jest gotowy", Toast.LENGTH_SHORT).show();
         isDetectorReady = isReady;
+        if(isReady)
+            Toast.makeText(getApplicationContext(), "Detektor jest gotowy", Toast.LENGTH_SHORT).show();
+        else
+            Toast.makeText(getApplicationContext(), "Przygotowywanie detektora", Toast.LENGTH_SHORT).show();
     }
 
     public void getImageFromBase(String detectionLabel, ImageView imgView)
     {
-        //get Product from base
-        FirebaseDatabase database = FirebaseDatabase.getInstance(); //as Global ?
-        signReference = database.getReference("data").child("images");
         if(detectionLabel.isEmpty())
             imgView.setImageResource(android.R.color.transparent);
         else
         {
+            signReference = database.getReference("data").child("sign");
             signReference.addValueEventListener(new ValueEventListener()
             {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot)
                 {
-                    //imageArrayList.clear();
                     for (DataSnapshot ds : snapshot.getChildren())
                     {
-                        Sign img = ds.getValue(Sign.class);
-                        if(img!=null)
+                        Sign sign = ds.getValue(Sign.class);
+                        if(sign!=null)
                         {
-                            if((img.getName().toLowerCase().equals(detectionLabel.toLowerCase())))
+                            if((sign.getName().equalsIgnoreCase(detectionLabel)))
                             {
-                                Glide.with(getBaseContext()).load(img.getLink()).into(imgView);
+                                Glide.with(getBaseContext()).load(sign.getLink()).into(imgView);
                             }
                         }
                         else
@@ -545,12 +518,10 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                 @Override
                 public void onCancelled(@NonNull DatabaseError error)
                 {
-                    //textView.setText(error.toString());
                     Toast.makeText(DetectorActivity.this, "Bład pobierania obrazu-- " +error.toString(), Toast.LENGTH_SHORT).show();
                 }
             });
         }
-
     }
     public void displayAlertDialog(int message, int title, int positiveBtn, boolean isNegativeBtn)
     {
@@ -579,7 +550,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     }
     private void speedService()
     {
-        //Permisja- lokalizacja:
         try
         {
             if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED )
@@ -588,7 +558,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             }
 
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);  //spr czy lokalizacja jest włączona
+            isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
             if(isGPSEnabled)
             {
@@ -607,13 +577,13 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             }
             else
             {
-                displayAlertDialog(R.string.localizationError,R.string.errorLocalization,R.string.errorRestart,true); //Dialog alert
+                displayAlertDialog(R.string.localizationError,R.string.errorLocalization,R.string.errorRestart,true);
             }
         }
         catch (Exception e)
         {
-            //e.printStackTrace();
-            displayAlertDialog(R.string.localizationNotGranted,R.string.errorLocalization,R.string.errorRestart,true); //Dialog alert
+            displayAlertDialog(R.string.localizationNotGranted,R.string.errorLocalization,R.string.errorRestart,true);
+            Log.d("LocErr",e.toString());
         }
     }
 
@@ -660,7 +630,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     {
         AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
 
-        if (setMute && audioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL) //silent mode
+        if (setMute && audioManager.getRingerMode() == AudioManager.RINGER_MODE_NORMAL)
         {
             try
             {
@@ -671,11 +641,14 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             }
             catch (Exception ex)
             {
-                //Alert informacyjny
-                displayAlertDialog(R.string.silentModeInf,R.string.silentModeTitle,R.string.errorRestart,true);
+                Log.d("silentMode","Error programmatically enable silent mode "+ex);
             }
         }
-        else //turn off silent mode
+        else if(setMute && audioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT)
+        {
+            displayAlertDialog(R.string.silentModeInf,R.string.silentModeTitle,R.string.errorRestart,true);
+        }
+        else
         {
             try
             {

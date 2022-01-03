@@ -8,3 +8,4 @@ public interface ILocationListener extends LocationListener
 {
     void onLocationChanged(Location location);
 }
+

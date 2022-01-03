@@ -3,13 +3,7 @@ package com.example.imageownt3;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.ml.modeldownloader.CustomModel;
 import com.google.firebase.ml.modeldownloader.CustomModelDownloadConditions;
 import com.google.firebase.ml.modeldownloader.DownloadType;
 import com.google.firebase.ml.modeldownloader.FirebaseModelDownloader;
@@ -21,18 +15,16 @@ import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.gpu.GpuDelegate;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class objectDetector
 {
     private Interpreter interpreter;
-    private ArrayList<String> labelList;
+    private final ArrayList<String> labelList;
     final private int INPUT_SIZE;
     private final ImageRecognitionInterface ImageRecognitionInterface;
     private static final int[] OUTPUT_TINY = new int[]{2535, 2535};
@@ -46,13 +38,9 @@ public class objectDetector
         this.labelList = arrayList;
         this.INPUT_SIZE = inputSize;
 
-
-        Log.d("sizeListobjectDetector",String.valueOf(labelList.size()));
-
         try
         {
             Interpreter.Options options = new Interpreter.Options();
-            //GPU
             gpuDelegate = new GpuDelegate();
             options.addDelegate(gpuDelegate);
             options.setNumThreads(4);
@@ -61,7 +49,7 @@ public class objectDetector
         }
         catch (Exception ex)
         {
-            ImageRecognitionInterface.onModelError("Błąd interpretera");
+            ImageRecognitionInterface.onModelError("Error - interpreter");
             Log.d("objectDetector", ex.toString());
         }
     }
@@ -69,44 +57,33 @@ public class objectDetector
     public void LoadModel(Interpreter.Options options)
     {
         CustomModelDownloadConditions conditions = new CustomModelDownloadConditions.Builder()
+                .requireWifi()
                 .build();
         FirebaseModelDownloader.getInstance()
                 .getModel("signModel", DownloadType.LOCAL_MODEL_UPDATE_IN_BACKGROUND, conditions)
-                .addOnSuccessListener(new OnSuccessListener<CustomModel>()
-                {
-                    @Override
-                    public void onSuccess(CustomModel model)
+                .addOnSuccessListener(model -> {
+                    File modelFile = model.getFile();
+                    if (modelFile != null)
                     {
-                        File modelFile = model.getFile();
-                        if (modelFile != null)
-                        {
-                            interpreter = new Interpreter(modelFile,options);
-                            ImageRecognitionInterface.onReadyInterpreter(true);
-                        }
+                        interpreter = new Interpreter(modelFile,options);
+                        ImageRecognitionInterface.onSuccessInterpreter(true);
                     }
-                }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e)
-            {
-                ImageRecognitionInterface.onLoadModelError(e.toString());
-                ImageRecognitionInterface.onReadyInterpreter(false);
-            }
-        });
+                }).addOnFailureListener(e -> {
+                    ImageRecognitionInterface.onLoadModelError(e.toString());
+                    ImageRecognitionInterface.onSuccessInterpreter(false);
+                });
     }
 
     public void recognizeSign(Mat matImage)
     {
         try
         {
-            //90°
             Mat rotatedMatImage = new Mat();
             Core.flip(matImage.t(), rotatedMatImage, 1);
 
-            //convert to Bitmap
             Bitmap bitmap = Bitmap.createBitmap(rotatedMatImage.cols(), rotatedMatImage.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(rotatedMatImage, bitmap);
 
-            //scale
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
             ByteBuffer byteBuffer = convertBitmapToByteBuffer(scaledBitmap);
 
@@ -114,11 +91,8 @@ public class objectDetector
             input[0] = byteBuffer;
 
             Map<Integer, Object> outputMap = new HashMap<>();
-
-            Log.d("sizeList2",String.valueOf(labelList.size()));
-
             outputMap.put(0, new float[1][OUTPUT_TINY[0]][4]);
-            outputMap.put(1, new float[1][OUTPUT_TINY[1]][labelList.size()]); //labels.size()
+            outputMap.put(1, new float[1][OUTPUT_TINY[1]][labelList.size()]);
 
             interpreter.runForMultipleInputsOutputs(input, outputMap);
 
@@ -130,8 +104,7 @@ public class objectDetector
                 float maxClass = 0;
                 int detectedClass = -1;
                 final float[] classes = new float[labelList.size()];
-
-                assert output != null; //?
+                assert output != null;
                 System.arraycopy(output[0][i], 0, classes, 0, labelList.size());
 
                 for (int c = 0; c < labelList.size(); ++c)
@@ -142,7 +115,6 @@ public class objectDetector
                         maxClass = classes[c];
                     }
                 }
-
                 final float score = maxClass;
                 if (score >= 0.9)
                 {
@@ -153,6 +125,7 @@ public class objectDetector
         catch(Exception ex)
         {
             ImageRecognitionInterface.onModelError("Błąd obliczeń");
+            ImageRecognitionInterface.onSuccessInterpreter(false);
             Log.d("recognitionError",ex.toString());
         }
     }
@@ -189,7 +162,7 @@ public class objectDetector
         void onRecognition(String detectedClass);
         void onLoadModelError(String modelError);
         void onModelError(String modelError);
-        void onReadyInterpreter(Boolean isReady);
+        void onSuccessInterpreter(Boolean isReady);
     }
 
 }

@@ -10,7 +10,7 @@
     <string name="infOpcje">Opcje</string>
     <string name="textSign">Wykryty znak</string>
 
-    <string name="modelError">Błąd pobierania modelu sztucznej inteligencji.</string>
+    <string name="modelError">Błąd pobierania etykiet lub modelu sztucznej inteligencji.</string>
     <string name="speachError">Aby pobrać pakiet wejdź do ustawień języka, następnie Text-to-speech output -> Ustawienia Preferred engine -> Install voice data -> wybierz z listy język polski i zainstaluj.</string>
     <string name="speachErrorTitle">Brak pakietu językowego</string>
     <string name="speachErrorYES">Przejdź do ustawień</string>
