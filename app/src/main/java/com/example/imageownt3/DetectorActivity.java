@@ -60,7 +60,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 {
     //OpenCV, Image Recognition
     private Mat mRgba;
-    private Mat mGray;
     private CameraBridgeViewBase openCvCamera;
     int INPUT_SIZE = 416;
     boolean modelError = false;
@@ -74,7 +73,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     boolean flag = false;
 
     //Options - selected in prev Activity
-    boolean speechOption, textImgOption, vibrationOption, speedOption, silenceOption;
+    boolean speechOption=false, textImgOption=false, vibrationOption=false, speedOption=false, silenceOption=false;
 
     //Detector, Base, TTS, vib
     private String TAG = "DetectorActivity";
@@ -82,7 +81,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     FirebaseDatabase database;
     DatabaseReference signReference;
     String previousDetection = "", detectedClass = "";
-    private TextToSpeech textToSpeech;
+    public TextToSpeech textToSpeech;
     ArrayList<String> labelList = new ArrayList<>();
     Boolean isDetectorReady = false;
     Vibrator vib;
@@ -120,11 +119,14 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
 
         //GET Bundles
         Bundle bundle = getIntent().getExtras();
-        textImgOption = bundle.getBoolean("textImgOption");
-        speechOption = bundle.getBoolean("speechOption");
-        vibrationOption = bundle.getBoolean("vibrationOption");
-        speedOption = bundle.getBoolean("speedOption");
-        silenceOption = bundle.getBoolean("silenceOption");
+        if(bundle!=null)
+        {
+            textImgOption = bundle.getBoolean("textImgOption");
+            speechOption = bundle.getBoolean("speechOption");
+            vibrationOption = bundle.getBoolean("vibrationOption");
+            speedOption = bundle.getBoolean("speedOption");
+            silenceOption = bundle.getBoolean("silenceOption");
+        }
 
         //SILENCE MODE:
         adjustAudio(silenceOption);
@@ -156,7 +158,8 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
             vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         labelList = getLabels();
-        objectDetector = new objectDetector(labelList, getApplicationContext(), INPUT_SIZE, this);
+        createObjectDetector(labelList);
+
         this.onSuccessInterpreter(isDetectorReady);
 
         timerBuffer();
@@ -175,6 +178,11 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                 flag = false;
             }
         });
+    }
+
+    public void createObjectDetector(ArrayList<String> labelList)
+    {
+        objectDetector = new objectDetector(labelList, getApplicationContext(), INPUT_SIZE, this);
     }
 
     private void timerBuffer()
@@ -212,7 +220,8 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
                         displayAlertDialog(R.string.TTSError, R.string.errorTitle, R.string.errorRestart, true);
                     }
                 });
-            } catch (Exception exception)
+            }
+            catch (Exception exception)
             {
                 Toast.makeText(this, "error " + exception.toString(), Toast.LENGTH_SHORT).show();
                 Log.d("speechError", exception.toString());
@@ -220,7 +229,7 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         }
     }
 
-    private void checkTTSLanguage(int result, Locale locale)
+    public void checkTTSLanguage(int result, Locale locale)
     {
         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED)
         {
@@ -245,7 +254,8 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         }
     }
 
-    private void textImgVisibility(boolean textOption) {
+    private void textImgVisibility(boolean textOption)
+    {
         //TEXT OPTION
         if (!textOption) {
             textSign1.setVisibility(View.INVISIBLE);
@@ -326,7 +336,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         if (openCvCamera != null)
             openCvCamera.disableView();
 
-        timer.cancel();
         super.onPause();
     }
 
@@ -338,7 +347,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
         super.onDestroy();
         if (openCvCamera != null)
             openCvCamera.disableView();
-
     }
 
     @Override
@@ -355,15 +363,15 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     }
 
     @Override
-    protected void onStart() {
+    protected void onStart()
+    {
         adjustAudio(silenceOption);
         super.onStart();
     }
     @Override
     public void onCameraViewStarted(int width, int height)
     {
-        mRgba = new Mat(height, width, CvType.CV_8UC4); //RGB
-        mGray = new Mat(height, width, CvType.CV_8UC1);
+        mRgba = new Mat(height, width, CvType.CV_8UC4);
     }
     @Override
     public void onCameraViewStopped()
@@ -374,7 +382,6 @@ public class DetectorActivity extends Activity implements CameraBridgeViewBase.C
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame)
     {
         mRgba = inputFrame.rgba();
-        mGray = inputFrame.gray();
 
         if(isDetectorReady)
             objectDetector.recognizeSign(mRgba);

@@ -26,10 +26,9 @@ public class objectDetector
     private Interpreter interpreter;
     private final ArrayList<String> labelList;
     final private int INPUT_SIZE;
-    private final ImageRecognitionInterface ImageRecognitionInterface;
+    public final ImageRecognitionInterface ImageRecognitionInterface;
     private static final int[] OUTPUT_TINY = new int[]{2535, 2535};
     Context context;
-    GpuDelegate gpuDelegate;
 
     objectDetector(ArrayList<String> arrayList, Context context, int inputSize, ImageRecognitionInterface ImageRecognitionInterface)
     {
@@ -41,8 +40,6 @@ public class objectDetector
         try
         {
             Interpreter.Options options = new Interpreter.Options();
-            gpuDelegate = new GpuDelegate();
-            options.addDelegate(gpuDelegate);
             options.setNumThreads(4);
             LoadModel(options);
             Log.d("objectDetector", "Successfully loaded model");
@@ -57,7 +54,6 @@ public class objectDetector
     public void LoadModel(Interpreter.Options options)
     {
         CustomModelDownloadConditions conditions = new CustomModelDownloadConditions.Builder()
-                .requireWifi()
                 .build();
         FirebaseModelDownloader.getInstance()
                 .getModel("signModel", DownloadType.LOCAL_MODEL_UPDATE_IN_BACKGROUND, conditions)
@@ -83,7 +79,6 @@ public class objectDetector
 
             Bitmap bitmap = Bitmap.createBitmap(rotatedMatImage.cols(), rotatedMatImage.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(rotatedMatImage, bitmap);
-
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
             ByteBuffer byteBuffer = convertBitmapToByteBuffer(scaledBitmap);
 
@@ -93,7 +88,6 @@ public class objectDetector
             Map<Integer, Object> outputMap = new HashMap<>();
             outputMap.put(0, new float[1][OUTPUT_TINY[0]][4]);
             outputMap.put(1, new float[1][OUTPUT_TINY[1]][labelList.size()]);
-
             interpreter.runForMultipleInputsOutputs(input, outputMap);
 
             int gridWidth = OUTPUT_TINY[0];
@@ -117,9 +111,7 @@ public class objectDetector
                 }
                 final float score = maxClass;
                 if (score >= 0.9)
-                {
                     ImageRecognitionInterface.onRecognition(String.valueOf(labelList.get(detectedClass)));
-                }
             }
         }
         catch(Exception ex)
@@ -153,7 +145,6 @@ public class objectDetector
                 byteBuffer.putFloat((((val)&0xFF))/255.0f);
             }
         }
-
         return byteBuffer;
     }
 

@@ -58,7 +58,6 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //LAYOUT
         Button btnCamera = findViewById(R.id.btnCamera);
         textImgSwitch = findViewById(R.id.textSwitch);
         speechSwitch = findViewById(R.id.speechSwitch);
@@ -69,11 +68,10 @@ public class MainActivity extends AppCompatActivity
 
         textImgSwitch.setChecked(true);
         speechSwitch.setChecked(false);
-        speedSwitch.setChecked(false);
-        vibSwitch.setChecked(true);
+        speedSwitch.setChecked(true);
+        vibSwitch.setChecked(false);
         silenceSwitch.setChecked(false);
 
-        //check camera permission
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
         {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
@@ -81,8 +79,6 @@ public class MainActivity extends AppCompatActivity
 
         internetState(internetInfo);
 
-
-        //TEST
         btnCamera.setOnClickListener(new View.OnClickListener()
         {
             @Override
