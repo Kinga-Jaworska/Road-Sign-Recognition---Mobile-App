@@ -1,12 +1,12 @@
 <resources>
-    <string name="app_name">Nazwa</string>
+    <string name="app_name">Detektor znaków drogowych</string>
     <string name="btnOption">Opcje</string>
     <string name="imgSwitch">Informacja obrazkowa i tekstowa</string>
     <string name="speechSwitch">Informacja dźwiękowa</string>
     <string name="textSwitch">Informacja tekstowa</string>
     <string name="vibSwitch">Wibracje dla znaków zakazu</string>
 
-    <string name="btnCamera">Włącz detektor znaków</string>
+    <string name="btnCamera">Włącz detektor</string>
     <string name="infOpcje">Opcje</string>
     <string name="textSign">Wykryty znak</string>
 
@@ -14,7 +14,7 @@
     <string name="speachError">Aby pobrać pakiet wejdź do ustawień języka, następnie Text-to-speech output -> Ustawienia Preferred engine -> Install voice data -> wybierz z listy język polski i zainstaluj.</string>
     <string name="speachErrorTitle">Brak pakietu językowego</string>
     <string name="speachErrorYES">Przejdź do ustawień</string>
-    <string name="speachErrorNO">Zamknij</string>
+    <string name="speachErrorNO">Restartuj aplikację</string>
     <string name="errorTitle">Error</string>
     <string name="errorLocalization">Lokalizacja</string>
     <string name="TTSError">Błąd mechanizmu Text-To-Speech</string>

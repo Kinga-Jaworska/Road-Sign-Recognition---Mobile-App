@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.cli.Options;
 import com.google.firebase.ml.modeldownloader.CustomModelDownloadConditions;
 import com.google.firebase.ml.modeldownloader.DownloadType;
 import com.google.firebase.ml.modeldownloader.FirebaseModelDownloader;
@@ -13,6 +14,8 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.gpu.GpuDelegate;
+import org.tensorflow.lite.nnapi.NnApiDelegate;
+
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -40,7 +43,9 @@ public class objectDetector
         try
         {
             Interpreter.Options options = new Interpreter.Options();
-            options.setNumThreads(4);
+            options.setNumThreads(2);
+            GpuDelegate gpuDelegate = new GpuDelegate();
+            options.addDelegate(gpuDelegate);
             LoadModel(options);
             Log.d("objectDetector", "Successfully loaded model");
         }
@@ -67,9 +72,9 @@ public class objectDetector
                 }).addOnFailureListener(e -> {
                     ImageRecognitionInterface.onLoadModelError(e.toString());
                     ImageRecognitionInterface.onSuccessInterpreter(false);
+
                 });
     }
-
     public void recognizeSign(Mat matImage)
     {
         try
@@ -110,7 +115,7 @@ public class objectDetector
                     }
                 }
                 final float score = maxClass;
-                if (score >= 0.9)
+                if (score >= 0.85)
                     ImageRecognitionInterface.onRecognition(String.valueOf(labelList.get(detectedClass)));
             }
         }

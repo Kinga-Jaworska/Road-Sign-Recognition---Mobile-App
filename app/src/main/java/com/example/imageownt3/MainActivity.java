@@ -1,33 +1,27 @@
 package com.example.imageownt3;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import android.Manifest;
-import android.app.AlertDialog;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.media.AudioManager;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.View;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.Switch;
-import android.widget.Toast;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
 import org.opencv.android.OpenCVLoader;
 
 public class MainActivity extends AppCompatActivity
@@ -36,19 +30,16 @@ public class MainActivity extends AppCompatActivity
     boolean connected;
     private SwitchCompat speechSwitch, textImgSwitch, vibSwitch, speedSwitch, silenceSwitch;
     private static final int  MY_PERMISSIONS_REQUEST_CAMERA = 0;
-    private static boolean openCvFlag;
 
     static
     {
         if(OpenCVLoader.initDebug())
         {
             Log.d("MainActivity", "Open CV successfully loaded");
-            openCvFlag = true;
         }
         else
         {
             Log.d("MainActivity", "Open CV error");
-            openCvFlag = false;
         }
     }
 
@@ -79,33 +70,28 @@ public class MainActivity extends AppCompatActivity
 
         internetState(internetInfo);
 
-        btnCamera.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                    boolean isTextChecked = textImgSwitch.isChecked();
-                    boolean isSpeechChecked = speechSwitch.isChecked();
-                    boolean isVibChecked = vibSwitch.isChecked();
-                    boolean isSpeedChecked = speedSwitch.isChecked();
-                    boolean isSilenceChecked = silenceSwitch.isChecked();
+        btnCamera.setOnClickListener(v -> {
+                boolean isTextChecked = textImgSwitch.isChecked();
+                boolean isSpeechChecked = speechSwitch.isChecked();
+                boolean isVibChecked = vibSwitch.isChecked();
+                boolean isSpeedChecked = speedSwitch.isChecked();
+                boolean isSilenceChecked = silenceSwitch.isChecked();
 
-                    if(!isTextChecked && !isSpeechChecked && !isVibChecked)
-                    {
-                        Toast.makeText(MainActivity.this,R.string.selectingOptionToast, Toast.LENGTH_SHORT).show();
-                    }
-                    else
-                    {
-                        Intent intent = new Intent(MainActivity.this, DetectorActivity.class);
-                        intent.putExtra("textImgOption",isTextChecked);
-                        intent.putExtra("speechOption",isSpeechChecked);
-                        intent.putExtra("vibrationOption", isVibChecked);
-                        intent.putExtra("speedOption", isSpeedChecked);
-                        intent.putExtra("silenceOption", isSilenceChecked);
+                if(!isTextChecked && !isSpeechChecked && !isVibChecked)
+                {
+                    Toast.makeText(MainActivity.this,R.string.selectingOptionToast, Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    Intent intent = new Intent(MainActivity.this, DetectorActivity.class);
+                    intent.putExtra("textImgOption",isTextChecked);
+                    intent.putExtra("speechOption",isSpeechChecked);
+                    intent.putExtra("vibrationOption", isVibChecked);
+                    intent.putExtra("speedOption", isSpeedChecked);
+                    intent.putExtra("silenceOption", isSilenceChecked);
 
-                        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                    }
-            }
+                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                }
         });
     }
 

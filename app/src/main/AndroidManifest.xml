@@ -16,6 +16,9 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <!-- VIBRATION -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission
+        android:name="android.permission.ACCESS_MOCK_LOCATION"
+        tools:ignore="MockLocation,ProtectedPermissions" />
 
 
     <uses-feature
@@ -41,6 +44,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ImageOwnT3">
         <activity
+
             android:name=".DetectorActivity"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity" />

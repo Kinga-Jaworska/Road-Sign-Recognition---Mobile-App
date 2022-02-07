@@ -1,7 +1,6 @@
 package com.example.imageownt3;
 import android.location.Location;
 
-
 public class CustomLocation extends Location
 {
     public CustomLocation(Location location)
