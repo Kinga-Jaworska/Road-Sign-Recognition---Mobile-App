@@ -1,6 +1,7 @@
-# Mobile application for road signs recognition
+<img align="right" width="150" height="150" src="https://github.com/36560/ImageOwnT3NEW/blob/master/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png?raw=true">
 
-<img align="right" width="100" height="100" src="">
+
+# Mobile application for road signs recognition 
 
 ## About App
 The application serves as a system supporting safe car driving, dedicated to the Android platform. 
@@ -28,7 +29,6 @@ Model was trined by efficient Yolov4 algorithm. App uses model in real-time by d
 - Speed Measure (Required permission for location)
 - Information about exceeding the speed limit in built-up areas (after turn on speed measure option)
 - Silent mode (extra option to mute notification, incoming calls and messages)
-- 
 ---
 
 ### View 
