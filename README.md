@@ -31,6 +31,6 @@ Model was trined by efficient Yolov4 algorithm. App uses model in real-time by d
 - Silent mode (extra option to mute notification, incoming calls and messages)
 ---
 
-### View 
+### View:
 
 ![app_sign](https://user-images.githubusercontent.com/67658221/164888428-c0fa8eaa-5e49-4aa5-adae-1b99bfe28b95.png)
