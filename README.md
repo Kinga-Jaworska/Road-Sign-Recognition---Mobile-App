@@ -35,8 +35,8 @@ Model was trined by efficient Yolov4 algorithm. App uses model in real-time by d
 
 ![app_sign](https://user-images.githubusercontent.com/67658221/164888428-c0fa8eaa-5e49-4aa5-adae-1b99bfe28b95.png)
 
-
-https://user-images.githubusercontent.com/67658221/170455100-0b18ca58-0939-4dbb-813f-b1fe56d1a959.mp4
+<div class="center">
+https://user-images.githubusercontent.com/67658221/170455100-0b18ca58-0939-4dbb-813f-b1fe56d1a959.mp4 </div>
 
 
 
