@@ -1,26 +1,26 @@
 <resources>
-    <string name="app_name">Nazwa</string>
+    <string name="app_name">Detektor znaków drogowych</string>
     <string name="btnOption">Opcje</string>
     <string name="imgSwitch">Informacja obrazkowa i tekstowa</string>
     <string name="speechSwitch">Informacja dźwiękowa</string>
     <string name="textSwitch">Informacja tekstowa</string>
     <string name="vibSwitch">Wibracje dla znaków zakazu</string>
 
-    <string name="btnCamera">Włącz detektor znaków</string>
+    <string name="btnCamera">Włącz detektor</string>
     <string name="infOpcje">Opcje</string>
     <string name="textSign">Wykryty znak</string>
 
-    <string name="modelError">Błąd pobierania modelu sztucznej inteligencji.</string>
+    <string name="modelError">Błąd pobierania etykiet lub modelu sztucznej inteligencji.</string>
     <string name="speachError">Aby pobrać pakiet wejdź do ustawień języka, następnie Text-to-speech output -> Ustawienia Preferred engine -> Install voice data -> wybierz z listy język polski i zainstaluj.</string>
     <string name="speachErrorTitle">Brak pakietu językowego</string>
     <string name="speachErrorYES">Przejdź do ustawień</string>
-    <string name="speachErrorNO">Zamknij</string>
+    <string name="speachErrorNO">Restartuj aplikację</string>
     <string name="errorTitle">Error</string>
     <string name="errorLocalization">Lokalizacja</string>
     <string name="TTSError">Błąd mechanizmu Text-To-Speech</string>
     <string name="localizationNotGranted">Nie udzielono dostępu do lokalizacji.</string>
     <string name="localizationError">Włącz lokalizację, aby umożliwić pomiar prędkości.</string>
-    <string name="countingModelError">Błąd przetwarzania modelu sztucznej inteligencji. Spróbuj ponownie poźniej...</string>
+    <string name="countingModelError">Błąd przetwarzania modelu sztucznej inteligencji.</string>
 
     <string name="errorRestart">Restartuj aplikację</string>
     <string name="errorOk">Zamknij okno</string>
@@ -47,5 +47,7 @@
 
     <string name="silentModeTitle">Informacja</string>
     <string name="silentModeInf">Urządzenie jest już w trybie wyciszenia</string>
+    <string name="selectingOptionToast">Wybierz przynajmniej jedną z pierwszych trzech opcji</string>
+    <string name="infoTitle">Informacja</string>
 
 </resources>
